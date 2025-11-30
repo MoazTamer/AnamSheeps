@@ -1,0 +1,587 @@
+﻿@using SalesModel.Models
+@model ModelWarehouseMovement
+@{
+    ViewData["Title"] = "بيان المستودع اليومي";
+    ViewData["Page"] = "بيان المستودع اليومي";
+}
+
+<link rel="stylesheet" href="~/css/DailyMovement.css" />
+
+
+<!--begin::Content wrapper-->
+<div class="d-flex flex-column flex-column-fluid">
+    <!--begin::Content-->
+    <div id="kt_app_content" class="app-content flex-column-fluid">
+        <!--begin::Content container-->
+        <div id="kt_app_content_container" class="app-container container-fluid">
+            @if (ViewBag.Type == "error")
+            {
+                <div class="alert alert-dismissible bg-light-danger border border-danger d-flex align-items-center p-5 mb-10">
+                    <i class="ki-duotone ki-shield-cross fs-2hx text-danger me-4"></i>
+                    <div class="d-flex flex-column">
+                        <h5 class="mb-1">خطأ!</h5>
+                        <span>@ViewBag.Message</span>
+                    </div>
+                    <button type="button" class="btn btn-icon ms-auto" data-bs-dismiss="alert">
+                        <i class="bi bi-x fs-1 text-danger"></i>
+                    </button>
+                </div>
+            }
+            else
+            {
+                <h2 class="text-center mb-8 fw-bold" style="font-size: 28px;">بيان المستودع اليومي</h2>
+
+                <!--begin::Header Card-->
+                <div class="card mb-5">
+                    <div class="card-body p-5">
+                        <div class="table-responsive">
+                            <table class="table table-bordered fw-bold">
+                                <thead>
+                                    <tr class="bg-light text-center">
+                                        <th style="width: 20%;">اليــــوم</th>
+                                        <th style="width: 20%;">تاريخ اليوم</th>
+                                        @* <th style="width: 20%;">الشهر</th>
+                                        <th style="width: 20%;">العام</th> *@
+                                        <th style="width: 20%;">المستخدم</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="text-center">
+                                        <td>@Model.WarehouseMovement_Date.ToString("dddd", new System.Globalization.CultureInfo("ar-EG"))</td>
+                                        <td>@Model.WarehouseMovement_Date.ToString("yyyy-MM-dd")</td>
+                                        @* <td>@Model.WarehouseMovement_Date.ToString("MM")</td>
+                                        <td>@Model.WarehouseMovement_Date.ToString("yyyy")</td> *@
+                                        <td>@User.Identity.Name</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!--end::Header Card-->
+                <!--begin::Save Button-->
+                <div class="mb-5 text-center">
+                    <button type="button" class="btn btn-success btn-lg" onclick="saveAllMovement()">
+                        <i class="ki-duotone ki-check fs-2"></i>
+                        حفظ البيان الكامل
+                    </button>
+                </div>
+                <!--end::Save Button-->
+                <!--begin::Hidden Products Template-->
+                <div id="productsTemplate" style="display:none;">
+                    <select class="product-select">
+                        <option value="">اختر الصنف</option>
+                        @if (ViewBag.Products != null)
+                        {
+                            var products = (List<TblProduct>)ViewBag.Products;
+                            foreach (var product in products)
+                            {
+                                <option value="@product.Product_ID">@product.Product_Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <!--end::Hidden Products Template-->
+                <!--begin::Hidden Delegates Template-->
+                <div id="delegatesTemplate" style="display:none;">
+                    <select class="delegate-select">
+                        <option value="">اختر المندوب</option>
+                        @if (ViewBag.Delegates != null)
+                        {
+                            foreach (var delegateUser in ViewBag.Delegates)
+                            {
+                                <option value="@delegateUser.UserName">@delegateUser.UserName</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <!--end::Hidden Delegates Template-->
+                <!--begin:: النفوق والمستهلك-->
+                <div class="card mb-5">
+                    <div class="card-header section-header">
+                        <h3 class="card-title mb-0">النفوق والمستهلك</h3>
+                    </div>
+                    <div class="card-body py-4">
+                        <div class="mb-3">
+                            <button id="addMortalityRowBtn" class=" btn btn-primary">
+
+                                <i class="ki-duotone ki-plus fs-2"></i>
+                                إضافة صنف
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered movement-table" id="mortalityTable">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th style="width: 50px;">م</th>
+                                        <th style="width: 300px;">الصنف</th>
+                                        <th style="width: 150px;">العدد</th>
+                                        <th style="width: 300px;">ملاحظة</th>
+                                        <th style="width: 80px;">حذف</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mortalityTableBody">             
+                                </tbody>
+                                <tfoot>
+                                    <tr class="totals-row">
+                                        <td colspan="2" class="text-center fw-bold">الإجمالــي</td>
+                                        <td class="text-center" id="mortalityTotalQuantity">0</td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!--end:: النفوق والمستهلك-->
+                <!--begin:: الحلال الموجود-->
+                <div class="card mb-5">
+                    <div class="card-header section-header">
+                        <h3 class="card-title mb-0">الحلال الموجود</h3>
+                    </div>
+                    <div class="card-body py-4">
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-primary" id="addlivestockTableRowBtn">
+                                <i class="ki-duotone ki-plus fs-2"></i>
+                                إضافة صنف
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered movement-table" id="livestockTable">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th style="width: 50px;">م</th>
+                                        <th style="width: 300px;">الصنف</th>
+                                        <th style="width: 150px;">العدد</th>
+                                        <th style="width: 300px;">ملاحظة</th>
+                                        <th style="width: 80px;">حذف</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="livestockTableBody">
+                               
+                                </tbody>
+                                <tfoot>
+                                    <tr class="totals-row">
+                                        <td colspan="2" class="text-center fw-bold">الإجمالــي</td>
+                                        <td class="text-center" id="livestockTotalQuantity">0</td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!--end:: الحلال الموجود-->
+                <!--begin:: الخارج من المزرعة-->
+                <div class="card mb-5">
+                    <div class="card-header section-header">
+                        <h3 class="card-title mb-0">الخارج من المزرعة</h3>
+                    </div>
+                    <div class="card-body py-4">
+                        <div class="mb-3">
+                            <button type="button" id="addoutgoingRowBtn" class="btn btn-primary">
+                                <i class="ki-duotone ki-plus fs-2"></i>
+                                إضافة صنف
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered movement-table" id="outgoingTable">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th style="width: 50px;">م</th>
+                                        <th style="width: 200px;">المندوب</th>
+                                        <th style="width: 250px;">الصنف</th>
+                                        <th style="width: 150px;">العدد</th>
+                                        <th style="width: 250px;">ملاحظة</th>
+                                        <th style="width: 80px;">حذف</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="outgoingTableBody">
+                                   
+                                </tbody>
+                                <tfoot>
+                                    <tr class="totals-row">
+                                        <td colspan="3" class="text-center fw-bold">الإجمالــي</td>
+                                        <td class="text-center" id="outgoingTotalQuantity">0</td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!--end:: الخارج من المزرعة-->
+            }
+        </div>
+        <!--end::Content container-->
+    </div>
+    <!--end::Content-->
+</div>
+<!--end::Content wrapper-->
+@section Scripts {
+
+    <script src="~/assets/plugins/global/plugins.bundle.js"></script>
+
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+
+    <script src="/js/WarehouseMovement2.js"></script>
+}
+
+
+@* @using SalesModel.Models
+@model ModelWarehouseMovement
+@{
+    ViewData["Title"] = "بيان المستودع اليومي";
+    ViewData["Page"] = "بيان المستودع اليومي";
+}
+
+<style>
+    .movement-table th {
+        background-color: #f5f8fa;
+        font-weight: 600;
+    }
+
+    .totals-row {
+        background-color: #fff4de;
+        font-weight: bold;
+    }
+
+    .section-header {
+        background: linear-gradient(112.14deg, #00D2FF 0%, #3A7BD5 100%);
+        color: white;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+</style>
+
+<!--begin::Content wrapper-->
+<div class="d-flex flex-column flex-column-fluid">
+    <!--begin::Content-->
+    <div id="kt_app_content" class="app-content flex-column-fluid">
+        <!--begin::Content container-->
+        <div id="kt_app_content_container" class="app-container container-fluid">
+            @if (ViewBag.Type == "error")
+            {
+                <div class="alert alert-dismissible bg-light-danger border border-danger d-flex align-items-center p-5 mb-10">
+                    <i class="ki-duotone ki-shield-cross fs-2hx text-danger me-4"></i>
+                    <div class="d-flex flex-column">
+                        <h5 class="mb-1">خطأ!</h5>
+                        <span>@ViewBag.Message</span>
+                    </div>
+                    <button type="button" class="btn btn-icon ms-auto" data-bs-dismiss="alert">
+                        <i class="bi bi-x fs-1 text-danger"></i>
+                    </button>
+                </div>
+            }
+            else
+            {
+                <h2 class="text-center mb-8 fw-bold" style="font-size: 28px;">بيان المستودع اليومي</h2>
+
+                <!--begin::Header Card-->
+                <div class="card mb-5">
+                    <div class="card-body p-5">
+                        <div class="table-responsive">
+                            <table class="table table-bordered fw-bold">
+                                <thead>
+                                    <tr class="bg-light text-center">
+                                        <th style="width: 20%;">اليــــوم</th>
+                                        <th style="width: 20%;">تاريخ اليوم</th>
+                                        <th style="width: 20%;">الشهر</th>
+                                        <th style="width: 20%;">العام</th>
+                                        <th style="width: 20%;">المستخدم</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="text-center">
+                                        <td>@Model.WarehouseMovement_Date.ToString("dddd", new System.Globalization.CultureInfo("ar-EG"))</td>
+                                        <td>@Model.WarehouseMovement_Date.ToString("yyyy-MM-dd")</td>
+                                        <td>@Model.WarehouseMovement_Date.ToString("MM")</td>
+                                        <td>@Model.WarehouseMovement_Date.ToString("yyyy")</td>
+                                        <td>@User.Identity.Name</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!--end::Header Card-->
+                <!--begin::Save Button-->
+                <div class="mb-5 text-center">
+                    <button type="button" class="btn btn-success btn-lg" onclick="saveAllMovement()">
+                        <i class="ki-duotone ki-check fs-2"></i>
+                        حفظ البيان الكامل
+                    </button>
+                </div>
+                <!--end::Save Button-->
+                <!--begin::Hidden Products Template-->
+                <div id="productsTemplate" style="display:none;">
+                    <select>
+                        <option value="">اختر الصنف</option>
+                        @if (ViewBag.Products != null)
+                        {
+                            var products = (List<TblProduct>)ViewBag.Products;
+                            foreach (var product in products)
+                            {
+                                <option value="@product.Product_ID">@product.Product_Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <!--end::Hidden Products Template-->
+                <!--begin::Hidden Delegates Template-->
+                <div id="delegatesTemplate" style="display:none;">
+                    <select>
+                        <option value="">اختر المندوب</option>
+                        @if (ViewBag.Delegates != null)
+                        {
+                            foreach (var delegateUser in ViewBag.Delegates)
+                            {
+                                <option value="@delegateUser.UserName">@delegateUser.UserName</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <!--end::Hidden Delegates Template-->
+                <!--begin:: النفوق والمستهلك-->
+                <div class="card mb-5">
+                    <div class="card-header section-header">
+                        <h3 class="card-title mb-0">النفوق والمستهلك</h3>
+                    </div>
+                    <div class="card-body py-4">
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-primary" onclick="addMortalityRow()">
+                                <i class="ki-duotone ki-plus fs-2"></i>
+                                إضافة صنف
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered movement-table" id="mortalityTable">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th style="width: 50px;">م</th>
+                                        <th style="width: 300px;">الصنف</th>
+                                        <th style="width: 150px;">العدد</th>
+                                        <th style="width: 300px;">ملاحظة</th>
+                                        <th style="width: 80px;">حذف</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mortalityTableBody">
+                                    @if (Model.Mortalities != null && Model.Mortalities.Any())
+                                    {
+                                        int rowNum = 1;
+                                        foreach (var mortality in Model.Mortalities)
+                                        {
+                                            <tr class="data-row">
+                                                <td class="text-center row-number">@rowNum</td>
+                                                <td>
+                                                    <select class="form-select form-select-sm product-select">
+                                                        <option value="">اختر الصنف</option>
+                                                        @if (ViewBag.Products != null)
+                                                        {
+                                                            var products = (List<TblProduct>)ViewBag.Products;
+                                                            foreach (var product in products)
+                                                            {
+                                                                <option value="@product.Product_ID" selected="@(product.Product_ID == mortality.WarehouseMortality_ProductID)">
+                                                                    @product.Product_Name
+                                                                </option>
+                                                            }
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td><input type="number" class="form-control form-control-sm text-center quantity-input" value="@mortality.WarehouseMortality_Quantity" min="0" /></td>
+                                                <td><input type="text" class="form-control form-control-sm notes-input" value="@mortality.WarehouseMortality_Notes" /></td>
+                                                <td class="text-center">
+                                                    <button type="button" class="btn btn-sm btn-icon btn-danger" onclick="deleteRow(this)">
+                                                        <i class="fa-solid fa-trash fs-4"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            rowNum++;
+                                        }
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr class="totals-row">
+                                        <td colspan="2" class="text-center fw-bold">الإجمالــي</td>
+                                        <td class="text-center" id="mortalityTotalQuantity">0</td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!--end:: النفوق والمستهلك-->
+                <!--begin:: الحلال الموجود-->
+                <div class="card mb-5">
+                    <div class="card-header section-header">
+                        <h3 class="card-title mb-0">الحلال الموجود</h3>
+                    </div>
+                    <div class="card-body py-4">
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-primary" onclick="addLivestockRow()">
+                                <i class="ki-duotone ki-plus fs-2"></i>
+                                إضافة صنف
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered movement-table" id="livestockTable">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th style="width: 50px;">م</th>
+                                        <th style="width: 300px;">الصنف</th>
+                                        <th style="width: 150px;">العدد</th>
+                                        <th style="width: 300px;">ملاحظة</th>
+                                        <th style="width: 80px;">حذف</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="livestockTableBody">
+                                    @if (Model.Livestocks != null && Model.Livestocks.Any())
+                                    {
+                                        int rowNum = 1;
+                                        foreach (var livestock in Model.Livestocks)
+                                        {
+                                            <tr class="data-row">
+                                                <td class="text-center row-number">@rowNum</td>
+                                                <td>
+                                                    <select class="form-select form-select-sm product-select">
+                                                        <option value="">اختر الصنف</option>
+                                                        @if (ViewBag.Products != null)
+                                                        {
+                                                            var products = (List<TblProduct>)ViewBag.Products;
+                                                            foreach (var product in products)
+                                                            {
+                                                                <option value="@product.Product_ID" selected="@(product.Product_ID == livestock.WarehouseLivestock_ProductID)">
+                                                                    @product.Product_Name
+                                                                </option>
+                                                            }
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td><input type="number" class="form-control form-control-sm text-center quantity-input" value="@livestock.WarehouseLivestock_Quantity" min="0" /></td>
+                                                <td><input type="text" class="form-control form-control-sm notes-input" value="@livestock.WarehouseLivestock_Notes" /></td>
+                                                <td class="text-center">
+                                                    <button type="button" class="btn btn-sm btn-icon btn-danger" onclick="deleteRow(this)">
+                                                        <i class="fa-solid fa-trash fs-4"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            rowNum++;
+                                        }
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr class="totals-row">
+                                        <td colspan="2" class="text-center fw-bold">الإجمالــي</td>
+                                        <td class="text-center" id="livestockTotalQuantity">0</td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!--end:: الحلال الموجود-->
+                <!--begin:: الخارج من المزرعة-->
+                <div class="card mb-5">
+                    <div class="card-header section-header">
+                        <h3 class="card-title mb-0">الخارج من المزرعة</h3>
+                    </div>
+                    <div class="card-body py-4">
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-primary" onclick="addOutgoingRow()">
+                                <i class="ki-duotone ki-plus fs-2"></i>
+                                إضافة صنف
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered movement-table" id="outgoingTable">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th style="width: 50px;">م</th>
+                                        <th style="width: 200px;">المندوب</th>
+                                        <th style="width: 250px;">الصنف</th>
+                                        <th style="width: 150px;">العدد</th>
+                                        <th style="width: 250px;">ملاحظة</th>
+                                        <th style="width: 80px;">حذف</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="outgoingTableBody">
+                                    @if (Model.Outgoings != null && Model.Outgoings.Any())
+                                    {
+                                        int rowNum = 1;
+                                        foreach (var outgoing in Model.Outgoings)
+                                        {
+                                            <tr class="data-row">
+                                                <td class="text-center row-number">@rowNum</td>
+                                                <td>
+                                                    <select class="form-select form-select-sm delegate-select">
+                                                        <option value="">اختر المندوب</option>
+                                                        @if (ViewBag.Delegates != null)
+                                                        {
+                                                            foreach (var delegateUser in ViewBag.Delegates)
+                                                            {
+                                                                <option value="@delegateUser.UserName" selected="@(delegateUser.UserName == outgoing.WarehouseOutgoing_DelegateName)">
+                                                                    @delegateUser.UserName
+                                                                </option>
+                                                            }
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <select class="form-select form-select-sm product-select">
+                                                        <option value="">اختر الصنف</option>
+                                                        @if (ViewBag.Products != null)
+                                                        {
+                                                            var products = (List<TblProduct>)ViewBag.Products;
+                                                            foreach (var product in products)
+                                                            {
+                                                                <option value="@product.Product_ID" selected="@(product.Product_ID == outgoing.WarehouseOutgoing_ProductID)">
+                                                                    @product.Product_Name
+                                                                </option>
+                                                            }
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td><input type="number" class="form-control form-control-sm text-center quantity-input" value="@outgoing.WarehouseOutgoing_Quantity" min="0" /></td>
+                                                <td><input type="text" class="form-control form-control-sm notes-input" value="@outgoing.WarehouseOutgoing_Notes" /></td>
+                                                <td class="text-center">
+                                                    <button type="button" class="btn btn-sm btn-icon btn-danger" onclick="deleteRow(this)">
+                                                        <i class="fa-solid fa-trash fs-4"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            rowNum++;
+                                        }
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr class="totals-row">
+                                        <td colspan="3" class="text-center fw-bold">الإجمالــي</td>
+                                        <td class="text-center" id="outgoingTotalQuantity">0</td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!--end:: الخارج من المزرعة-->
+            }
+        </div>
+        <!--end::Content container-->
+    </div>
+    <!--end::Content-->
+</div>
+<!--end::Content wrapper-->
+@section Scripts {
+
+    <script src="~/assets/plugins/global/plugins.bundle.js"></script>
+
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+
+    <script src="/js/WarehouseMovement.js"></script>
+} *@

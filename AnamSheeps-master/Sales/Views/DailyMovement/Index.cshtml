@@ -1,0 +1,1182 @@
+﻿@using SalesModel.Models
+@model ModelDailyMovement
+@{
+    ViewData["Title"] = "بيان الحركة اليومية";
+    ViewData["Page"] = "بيان الحركة اليومية";
+}
+
+<link rel="stylesheet" href="~/css/DailyMovement.css" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+
+<!--begin::Content wrapper-->
+<div class="d-flex flex-column flex-column-fluid">
+    <!--begin::Content-->
+    <div id="kt_app_content" class="app-content flex-column-fluid">
+        <!--begin::Content container-->
+        <div id="kt_app_content_container" class="app-container container-fluid">
+            @if (ViewBag.Type == "error")
+            {
+                <div class="alert alert-dismissible bg-light-danger border border-danger d-flex align-items-center p-5 mb-10">
+                    <i class="ki-duotone ki-shield-cross fs-2hx text-danger me-4"></i>
+                    <div class="d-flex flex-column">
+                        <h5 class="mb-1">خطأ!</h5>
+                        <span>@ViewBag.Message</span>
+                    </div>
+                    <button type="button" class="btn btn-icon ms-auto" data-bs-dismiss="alert">
+                        <i class="bi bi-x fs-1 text-danger"></i>
+                    </button>
+                </div>
+            }
+            else
+            {
+                // جنب بعض
+                <div class="d-flex justify-content-between align-items-center mb-8">
+                    <a href="@Url.Action("Index", "Home")" class="btn btn-light-primary">
+                        <i class="ki-duotone ki-home fs-3 me-2"></i>
+                        الرئيسية
+                    </a>
+                    <div class="text-center flex-grow-1">
+                        <h2 class="fw-bold mb-1" style="font-size: 28px;">بيان الحركة اليومية</h2>
+                        <h2 class="fw-bold" style="font-size: 28px;">مزرعة نخبة الأنعام</h2>
+                    </div>
+                </div>
+
+                // تحت بعض
+                @* <div class="text-center mb-8">
+                    <h2 class="fw-bold mb-1" style="font-size: 28px;">بيان الحركة اليومية</h2>
+                    <h2 class="fw-bold mb-4" style="font-size: 28px;">مزرعة نخبة الأنعام</h2>
+                    <a href="@Url.Action("Index", "Home")" class="btn btn-light-primary">
+                        <i class="ki-duotone ki-home fs-3 me-2"></i>
+                        الرئيسية
+                    </a>
+                </div> *@
+
+
+                <!--begin::Header Card-->
+                <div class="card mb-5">
+                    <div class="card-body p-5">
+                        <div class="table-responsive">
+                            @Html.HiddenFor(m => m.DailyMovement_UserID)
+                            @Html.HiddenFor(m => m.DailyMovement_Date)
+                            <input type="hidden" id="currentUserId" value="@ViewBag.CurrentUserId" />
+
+                            <input type="hidden" id="dailyDate" value="@Model.DailyMovement_Date.ToString("yyyy-MM-dd")" />
+
+                            <table class="table table-bordered fw-bold">
+                                <thead>
+                                    <tr class="bg-light text-center">
+                                        <th style="width: 20%;">اليــــوم</th>
+                                        <th style="width: 20%;">تاريخ اليوم</th>
+                                        <th style="width: 20%;">المستخدم</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="text-center">
+                                        <td>@Model.DailyMovement_Date.ToString("dddd", new System.Globalization.CultureInfo("ar-EG"))</td>
+                                        <td>@Model.DailyMovement_Date.ToString("yyyy-MM-dd")</td>
+                                        @* <td>@User.Identity.Name</td> *@
+                                        @* <td>@Model.userName</td> *@
+                                        <td>@ViewBag.userName</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!--end::Header Card-->
+                <!--begin:: purchases Card-->
+                <div class="card mb-5">
+
+                    <!--begin::Card header-->
+                    <div class="card-header section-header">
+                        <h3 class="card-title mb-0">
+                            <span class="card-label fw-bold fs-3 mb-1">المشتريات</span>
+                        </h3>
+                    </div>
+                    <!--end::Card header-->
+                    <!--begin::Card body-->
+                    <div class="card-body py-4">
+                        <!--begin::Hidden Products Template-->
+                        <div id="productsTemplate" style="display:none;">
+                            <select>
+                                <option value="">اختر الصنف</option>
+                                @if (ViewBag.Products != null)
+                                {
+                                    var products = (List<TblProduct>)ViewBag.Products;
+                                    foreach (var product in products)
+                                    {
+                                        var price = product.Product_Price ?? 0;
+                                        <option value="@product.Product_ID" data-price="@price">@product.Product_Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <!--end::Hidden Products Template-->
+                        <!--begin::Add Button-->
+                        <div class="mb-5">
+                            <button type="button" class="btn btn-primary" onclick="addNewRow()">
+                                <i class="ki-duotone ki-plus fs-2"></i>
+                                إضافة صنف
+                            </button>
+                        </div>
+                        <!--end::Add Button-->
+                        <!--begin::Table-->
+                        <div class="table-responsive">
+                            <table class="table table-bordered movement-table" id="movementTable">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th style="width: 50px;">م</th>
+                                        <th class="col-product">الصنف</th>
+                                        <th class="col-qty">العدد</th>
+                                        <th class="col-price">السعر</th>
+                                        <th class="col-total">الإجمالي</th>
+                                        <th class="col-total">الدفع</th>
+                                        <th class="col-total">ملاحظة</th>
+                                        <th style="width: 80px;">حذف</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody id="movementTableBody">
+                                    @if (Model.Details != null && Model.Details.Any())
+                                    {
+                                        int rowNum = 1;
+                                        foreach (var detail in Model.Details)
+                                        {
+                                            <tr class="data-row">
+                                                <td class="text-center row-number">@rowNum</td>
+                                                <td>
+                                                    <select class="form-select form-select-sm product-select select-arrow-left" data-detail-id="@detail.DailyMovementDetails_ID">
+                                                        <option value="">اختر الصنف</option>
+                                                        @if (ViewBag.Products != null)
+                                                        {
+                                                            var products = (List<TblProduct>)ViewBag.Products;
+                                                            foreach (var product in products)
+                                                            {
+                                                                var price = product.Product_Price ?? 0;
+                                                                <option value="@product.Product_ID"
+                                                                        data-price="@product.Product_Price"
+                                                                        selected="@(product.Product_ID == detail.DailyMovementDetails_ProductID)">
+                                                                    @product.Product_Name
+                                                                </option>
+                                                            }
+                                                        }
+                                                    </select>
+
+
+                                                </td>
+                                                <td><input type="number" class="form-control form-control-sm text-center quantity-input" value="@detail.DailyMovementDetails_Quantity" min="0" /></td>
+                                                <td><input type="number" step="1" class="form-control form-control-sm text-center price-input" value="@detail.DailyMovementDetails_Price" min="0" /></td>
+                                                <td><input type="number" step="1" class="form-control form-control-sm text-center total-input" value="@detail.DailyMovementDetails_Total" min="0" /></td>
+                                                <td>
+                                                    <select class="form-select form-select-sm payment-type">
+                                                        <option value="نقدا" selected="@(detail.DailyMovementDetails_PaymentType == "نقدا")">نقدا</option>
+                                                        <option value="آجل" selected="@(detail.DailyMovementDetails_PaymentType == "آجل")">آجل</option>
+                                                        <option value="تحويل" selected="@(detail.DailyMovementDetails_PaymentType == "تحويل")">تحويل</option>
+                                                    </select>
+                                                </td>
+                                                <td><input type="text" class="form-control form-control-sm notes-input" value="@detail.DailyMovementDetails_Notes" /></td>
+                                                <td class="text-center">
+                                                    <button type="button" class="btn btn-sm btn-icon" onclick="deleteRow(this)">
+                                                        <i class="ki-duotone ki-trash fs-2"></i>
+                                                        <i class="fa-solid fa-trash fs-4 text-danger"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            rowNum++;
+                                        }
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr class="totals-row">
+                                        <td colspan="2" class="text-center fw-bold">الإجمالــي</td>
+                                        <td class="text-center fw-bold" id="totalQuantity">0</td>
+                                        <td></td>
+                                        <td class="text-center fw-bold" id="grandTotal">0.00</td>
+                                        <td colspan="3"></td>
+                                    </tr>
+                                    <tr class="totals-row">
+                                        <td colspan="2" class="text-center fw-bold">إجمالي آجل</td>
+                                        <td class="text-center fw-bold" id="creditQuantity">0</td>
+                                        <td></td>
+                                        <td class="text-center fw-bold" id="totalCredit">0.00</td>
+                                        <td colspan="3"></td>
+                                    </tr>
+                                    <tr class="totals-row">
+                                        <td colspan="2" class="text-center fw-bold">إجمالي نقدا</td>
+                                        <td class="text-center fw-bold" id="cashQuantity">0</td>
+                                        <td></td>
+                                        <td class="text-center fw-bold" id="totalCash">0.00</td>
+                                        <td colspan="3"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <!--end::Table-->
+                    </div>
+                    <!--end::Card body-->
+
+                </div>
+
+                <!--begin:: Sales Card-->
+                <div class="card mt-5">
+                    <!--begin::Card header-->
+                    <div class="card-header border-0 pt-6  section-header">
+                        <h3 class="card-title align-items-start flex-column">
+                            <span class="card-label fw-bold fs-3 mb-1">المبيعات</span>
+                        </h3>
+                    </div>
+                    <!--end::Card header-->
+                    <!--begin::Card body-->
+                    <div class="card-body py-4">
+                        <!--begin::Add Button-->
+                        <div class="mb-5">
+                            <button type="button" class="btn btn-primary" onclick="addNewSalesRow()">
+                                <i class="ki-duotone ki-plus fs-2"></i>
+                                إضافة صنف
+                            </button>
+
+                        </div>
+                        <!--end::Add Button-->
+                        <!--begin::Table-->
+                        <div class="table-responsive">
+                            <table class="table table-bordered movement-table" id="salesTable">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th style="width: 50px;">م</th>
+                                        <th class="col-product">الصنف</th>
+                                        <th class="col-qty">العدد</th>
+                                        <th class="col-price">السعر</th>
+                                        <th class="col-total">الإجمالي</th>
+                                        <th class="col-total">الدفع</th>
+                                        <th class="col-total">ملاحظة</th>
+                                        <th style="width: 80px;">حذف</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="salesTableBody">
+                                    @if (Model.Sales != null && Model.Sales.Any())
+                                    {
+                                        int rowNum = 1;
+                                        foreach (var sale in Model.Sales)
+                                        {
+                                            <tr class="sales-row">
+                                                <td class="text-center sales-row-number">@rowNum</td>
+                                                <td>
+                                                    <select class="form-select form-select-sm sales-product-select select-arrow-left">
+                                                        <option value="">اختر الصنف</option>
+                                                        @if (ViewBag.Products != null)
+                                                        {
+                                                            var products = (List<TblProduct>)ViewBag.Products;
+                                                            foreach (var product in products)
+                                                            {
+                                                                <option value="@product.Product_ID"
+                                                                        data-price="@product.Product_Price"
+                                                                        selected="@(product.Product_ID == sale.DailyMovementSales_ProductID)">
+                                                                    @product.Product_Name
+                                                                </option>
+                                                            }
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td><input type="number" class="form-control form-control-sm text-center sales-quantity-input" value="@sale.DailyMovementSales_Quantity" min="0" /></td>
+                                                <td><input type="number" step="0.01" class="form-control form-control-sm text-center sales-price-input" value="@sale.DailyMovementSales_Price" min="0" /></td>
+                                                <td><input type="number" step="0.01" class="form-control form-control-sm text-center sales-total-input" value="@sale.DailyMovementSales_Total" min="0" /></td>
+                                                <td>
+                                                    <select class="form-select form-select-sm sales-payment-type">
+                                                        <option value="نقدا" selected="@(sale.DailyMovementSales_PaymentType == "نقدا")">نقدا</option>
+                                                        <option value="آجل" selected="@(sale.DailyMovementSales_PaymentType == "آجل")">آجل</option>
+                                                        <option value="تحويل" selected="@(sale.DailyMovementSales_PaymentType == "تحويل")">تحويل</option>
+                                                        <option value="تمويل" selected="@(sale.DailyMovementSales_PaymentType == "تمويل")">تمويل</option>
+                                                    </select>
+                                                </td>
+                                                <td><input type="text" class="form-control form-control-sm sales-notes-input" value="@sale.DailyMovementSales_Notes" /></td>
+                                                <td class="text-center">
+                                                    <button type="button" class="btn btn-sm btn-icon" onclick="deleteSalesRow(this)">
+                                                        <i class="fa-solid fa-trash fs-4 text-danger"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            rowNum++;
+                                        }
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr class="totals-row">
+                                        <td colspan="2" class="text-center fw-bold">الإجمالــي</td>
+                                        <td class="text-center fw-bold" id="salesTotalQuantity">@(Model.Sales?.Sum(s => s.DailyMovementSales_Quantity) ?? 0)</td>
+                                        <td></td>
+                                        <td class="text-center fw-bold" id="salesGrandTotal">@(Model.Sales?.Sum(s => s.DailyMovementSales_Total).ToString("0.00") ?? "0.00")</td>
+                                        <td colspan="3"></td>
+                                    </tr>
+                                    <tr class="totals-row">
+                                        <td colspan="2" class="text-center fw-bold">إجمالي آجل</td>
+                                        <td class="text-center fw-bold" id="salesCreditQuantity">@(Model.Sales?.Where(s => s.DailyMovementSales_PaymentType == "آجل").Sum(s => s.DailyMovementSales_Quantity) ?? 0)</td>
+                                        <td></td>
+                                        <td class="text-center fw-bold" id="salesTotalCredit">@(Model.Sales?.Where(s => s.DailyMovementSales_PaymentType == "آجل").Sum(s => s.DailyMovementSales_Total).ToString("0.00") ?? "0.00")</td>
+                                        <td colspan="3"></td>
+                                    </tr>
+                                    <tr class="totals-row">
+                                        <td colspan="2" class="text-center fw-bold">إجمالي نقدا</td>
+                                        <td class="text-center fw-bold" id="salesCashQuantity">@(Model.Sales?.Where(s => s.DailyMovementSales_PaymentType == "نقدا").Sum(s => s.DailyMovementSales_Quantity) ?? 0)</td>
+                                        <td></td>
+                                        <td class="text-center fw-bold" id="salesTotalCash">@(Model.Sales?.Where(s => s.DailyMovementSales_PaymentType == "نقدا").Sum(s => s.DailyMovementSales_Total).ToString("0.00") ?? "0.00")</td>
+                                        <td colspan="3"></td>
+                                    </tr>
+                                </tfoot>
+                                @* <tfoot>
+                                    <tr class="totals-row">
+                                        <td colspan="2" class="text-center fw-bold">الإجمالــي</td>
+                                        <td class="text-center" id="salesTotalQuantity">0</td>
+                                        <td></td>
+                                        <td class="text-center" id="salesGrandTotal">0.00</td>
+                                        <td colspan="3"></td>
+                                    </tr>
+                                    <tr class="totals-row">
+                                        <td colspan="2" class="text-center fw-bold">إجمالي آجل</td>
+                                        <td class="text-center" id="salesCreditQuantity">0</td>
+                                        <td></td>
+                                        <td class="text-center" id="salesTotalCredit">0.00</td>
+                                        <td colspan="3"></td>
+                                    </tr>
+                                    <tr class="totals-row">
+                                        <td colspan="2" class="text-center fw-bold">إجمالي نقدا</td>
+                                        <td class="text-center" id="salesCashQuantity">0</td>
+                                        <td></td>
+                                        <td class="text-center" id="salesTotalCash">0.00</td>
+                                        <td colspan="3"></td>
+                                    </tr>
+                                </tfoot> *@
+                            </table>
+                        </div>
+                        <!--end::Table-->
+                    </div>
+                    <!--end::Card body-->
+                </div>
+                <!--end:: Sales Card-->
+                <!--begin::Expenses Card-->
+                <div class="card mt-5">
+                    <!--begin::Card header-->
+                    <div class="card-header border-0 pt-6  section-header">
+                        <h3 class="card-title align-items-start flex-column">
+                            <span class="card-label fw-bold fs-3 mb-1">المصروفــات</span>
+                        </h3>
+                    </div>
+                    <!--end::Card header-->
+                    <!--begin::Card body-->
+                    <div class="card-body py-4">
+                        <!--begin::Hidden Categories Template-->
+                        <div id="categoriesTemplate" style="display:none;">
+                            <select>
+                                <option value="">اختر البند</option>
+                                @if (ViewBag.ExpenseCategories != null)
+                                {
+                                    var categories = (List<TblExpense_Item>)ViewBag.ExpenseCategories;
+                                    foreach (var category in categories)
+                                    {
+                                        <option value="@category.ExpenseItem_ID">@category.ExpenseItem_Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <!--end::Hidden Categories Template-->
+                        <!--begin::Add Button-->
+                        <div class="mb-5">
+                            <button type="button" class="btn btn-primary" onclick="addNewExpenseRow()">
+                                <i class="ki-duotone ki-plus fs-2"></i>
+                                إضافة مصروف
+                            </button>
+
+                        </div>
+                        <!--end::Add Button-->
+                        <!--begin::Table-->
+                        <div class="table-responsive">
+                            <table class="table table-bordered movement-table" id="expensesTable">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th style="width: 50px;">م</th>
+                                        <th style="width: 250px;">البند</th>
+                                        <th style="width: 100px;">العدد</th>
+                                        <th style="width: 120px;">السعر</th>
+                                        <th style="width: 120px;">الإجمالي</th>
+                                        <th style="width: 200px;">ملاحظة</th>
+                                        <th style="width: 80px;">حذف</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="expensesTableBody">
+                                    @if (Model.Expenses != null && Model.Expenses.Any())
+                                    {
+                                        int rowNum = 1;
+                                        foreach (var expense in Model.Expenses)
+                                        {
+                                            <tr class="expense-row">
+                                                <td class="text-center expense-row-number">@rowNum</td>
+                                                <td>
+                                                    <input type="text" class="form-control form-control-sm expense-category-input" placeholder="اسم المصروف" value="@expense.DailyMovementExpense_CategoryName" />
+                                                </td>
+                                                <td><input type="number" class="form-control form-control-sm text-center expense-quantity-input" value="@expense.DailyMovementExpense_Quantity" min="0" /></td>
+                                                <td><input type="number" step="0.01" class="form-control form-control-sm text-center expense-amount-input" value="@expense.DailyMovementExpense_Amount" min="0" /></td>
+                                                <td><input type="number" step="0.01" class="form-control form-control-sm text-center expense-total-input" value="@expense.DailyMovementExpense_Total" min="0" /></td>
+                                                <td><input type="text" class="form-control form-control-sm expense-notes-input" value="@expense.DailyMovementExpense_Notes" /></td>
+                                                <td class="text-center">
+                                                    <button type="button" class="btn btn-sm btn-icon" onclick="deleteExpenseRow(this)">
+                                                        <i class="fa-solid fa-trash fs-4 text-danger"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            rowNum++;
+                                        }
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr class="totals-row">
+                                        <td colspan="2" class="text-center fw-bold">إجمالي المصروفات</td>
+                                        <td class="text-center fw-bold" id="totalExpenseQuantity">0</td>
+                                        <td></td>
+                                        <td class="text-center fw-bold" id="grandTotalExpenses">0.00</td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <!--end::Table-->
+                    </div>
+                    <!--end::Card body-->
+                </div>
+                <!--end::Expenses Card-->
+                <!--begin::Suppliers Card-->
+                <div class="card mt-5">
+                    <!--begin::Card header-->
+                    <div class="card-header border-0 pt-6  section-header">
+                        <h3 class="card-title align-items-start flex-column">
+                            <span class="card-label fw-bold fs-3 mb-1">سداد الموردين</span>
+                        </h3>
+                    </div>
+                    <!--end::Card header-->
+                    <!--begin::Card body-->
+                    <div class="card-body py-4">
+                        <!--begin::Hidden Suppliers Template-->
+                        <div id="suppliersTemplate" style="display:none;">
+                            <select>
+                                <option value="">اختر المورد</option>
+                                @if (ViewBag.Suppliers != null)
+                                {
+                                    var suppliers = (List<TblSupplier>)ViewBag.Suppliers;
+                                    foreach (var supplier in suppliers)
+                                    {
+                                        <option value="@supplier.Supplier_ID">@supplier.Supplier_Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <!--end::Hidden Suppliers Template-->
+                        <!--begin::Add Button-->
+                        <div class="mb-5">
+                            <button type="button" class="btn btn-primary" onclick="addNewSupplierRow()">
+                                <i class="ki-duotone ki-plus fs-2"></i>
+                                إضافة مورد
+                            </button>
+
+                        </div>
+                        <!--end::Add Button-->
+                        <!--begin::Table-->
+                        <div class="table-responsive">
+                            <table class="table table-bordered movement-table" id="suppliersTable">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th style="width: 50px;">م</th>
+                                        <th style="width: 300px;">الاســـم</th>
+                                        <th style="width: 150px;">المبلغ</th>
+                                        <th style="width: 250px;">ملاحظــة</th>
+                                        <th style="width: 80px;">حذف</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="suppliersTableBody">
+                                    @if (Model.Suppliers != null && Model.Suppliers.Any())
+                                    {
+                                        int rowNum = 1;
+                                        foreach (var supplier in Model.Suppliers)
+                                        {
+                                            <tr class="supplier-row">
+                                                <td class="text-center supplier-row-number">@rowNum</td>
+                                                <td>
+                                                    <input type="text" class="form-control form-control-sm supplier-name-input" value="@supplier.Supplier_Name" />
+                                                </td>
+                                                <td><input type="number" step="0.01" class="form-control form-control-sm text-center supplier-amount-input" value="@supplier.DailyMovementSupplier_Amount" min="0" /></td>
+                                                <td><input type="text" class="form-control form-control-sm supplier-notes-input" value="@supplier.DailyMovementSupplier_Notes" /></td>
+                                                <td class="text-center">
+                                                    <button type="button" class="btn btn-sm btn-icon" onclick="deleteSupplierRow(this)">
+                                                        <i class="fa-solid fa-trash fs-4 text-danger"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            rowNum++;
+                                        }
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr class="totals-row">
+                                        <td colspan="2" class="text-center fw-bold">الإجمــــالـــي</td>
+                                        <td class="text-center fw-bold fw-bold" id="grandTotalSuppliers">0.00</td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <!--end::Table-->
+                    </div>
+                    <!--end::Card body-->
+                </div>
+                <!--end::Suppliers Card-->
+                <!--begin::Customers Card-->
+                <div class="card mt-5">
+                    <!--begin::Card header-->
+                    <div class="card-header border-0 pt-6  section-header">
+                        <h3 class="card-title align-items-start flex-column">
+                            <span class="card-label fw-bold fs-3 mb-1">سداد العملاء</span>
+                        </h3>
+                    </div>
+                    <!--end::Card header-->
+                    <!--begin::Card body-->
+                    <div class="card-body py-4">
+                        <!--begin::Hidden Customers Template-->
+                        <div id="customersTemplate" style="display:none;">
+                            <select>
+                                <option value="">اختر العميل</option>
+                                @if (ViewBag.Customers != null)
+                                {
+                                    var customers = (List<TblCustomer>)ViewBag.Customers;
+                                    foreach (var customer in customers)
+                                    {
+                                        <option value="@customer.Customer_ID">@customer.Customer_Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <!--end::Hidden Customers Template-->
+                        <!--begin::Add Button-->
+                        <div class="mb-5">
+                            <button type="button" class="btn btn-primary" onclick="addNewCustomerRow()">
+                                <i class="ki-duotone ki-plus fs-2"></i>
+                                إضافة عميل
+                            </button>
+
+                        </div>
+                        <!--end::Add Button-->
+                        <!--begin::Table-->
+                        <div class="table-responsive">
+                            <table class="table table-bordered movement-table" id="customersTable">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th style="width: 50px;">م</th>
+                                        <th style="width: 300px;">الاســـم</th>
+                                        <th style="width: 150px;">المبلغ</th>
+                                        <th style="width: 250px;">ملاحظــة</th>
+                                        <th style="width: 80px;">حذف</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="customersTableBody">
+                                    @if (Model.Customers != null && Model.Customers.Any())
+                                    {
+                                        int rowNum = 1;
+                                        foreach (var customer in Model.Customers)
+                                        {
+                                            <tr class="customer-row">
+                                                <td class="text-center customer-row-number">@rowNum</td>
+                                                <td>
+                                                    <input type="text" class="form-control form-control-sm customer-name-input" value="@customer.Customer_Name" />
+                                               
+                                                </td>
+                                                <td><input type="number" step="1" class="form-control form-control-sm text-center customer-amount-input" value="@customer.DailyMovementCustomer_Amount" min="0" /></td>
+                                                <td><input type="text" class="form-control form-control-sm customer-notes-input" value="@customer.DailyMovementCustomer_Notes" /></td>
+                                                <td class="text-center">
+                                                    <button type="button" class="btn btn-sm btn-icon" onclick="deleteCustomerRow(this)">
+                                                        <i class="fa-solid fa-trash fs-4 text-danger"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            rowNum++;
+                                        }
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr class="totals-row">
+                                        <td colspan="2" class="text-center fw-bold">الإجمــــالـــي</td>
+                                        <td class="text-center fw-bold fs-5" id="grandTotalCustomers">0.00</td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <!--end::Table-->
+                    </div>
+                    <!--end::Card body-->
+                </div>
+                <!--end::Customers Card-->
+                <!--begin::Taslim Card-->
+                <div class="card mt-5">
+                    <!--begin::Card header-->
+                    <div class="card-header border-0 pt-6  section-header">
+
+                        <h3 class="card-title align-items-start flex-column">
+                            <span class="card-label fw-bold fs-3 mb-1">تسليم للإدارة</span>
+                        </h3>
+                    </div>
+                    <!--end::Card header-->
+                    <!--begin::Card body-->
+                    <div class="card-body py-4">
+                        <!--begin::Add Button-->
+                        <div class="mb-5">
+                            <button type="button" class="btn btn-primary" onclick="addNewTaslimRow()">
+                                <i class="ki-duotone ki-plus fs-2"></i>
+                                إضافة تسليم
+                            </button>
+                        </div>
+                        <!--end::Add Button-->
+                        <!--begin::Table-->
+                        <div class="table-responsive">
+                            <table class="table table-bordered movement-table" id="taslimTable">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th style="width: 50px;">م</th>
+                                        <th style="width: 300px;">المستلم</th>
+                                        <th style="width: 150px;">المبلغ</th>
+                                        <th style="width: 250px;">ملاحظــة</th>
+                                        <th style="width: 80px;">حذف</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="taslimTableBody">
+                                    @if (Model.Taslim != null && Model.Taslim.Any())
+                                    {
+                                        int rowNum = 1;
+                                        foreach (var taslim in Model.Taslim)
+                                        {
+                                            <tr class="taslim-row">
+                                                <td class="text-center taslim-row-number">@rowNum</td>
+                                                <td>
+                                                    <input type="text"
+                                                           class="form-control form-control-sm taslim-receiver-input"
+                                                           value="@taslim.DailyMovementTaslim_Receiver"
+                                                           placeholder="اسم المستلم" />
+                                                </td>
+                                                <td>
+                                                    <input type="number" step="1"
+                                                           class="form-control form-control-sm text-center taslim-amount-input"
+                                                           value="@taslim.DailyMovementTaslim_Amount"
+                                                           min="0" />
+                                                </td>
+                                                <td>
+                                                    <input type="text"
+                                                           class="form-control form-control-sm taslim-notes-input"
+                                                           value="@taslim.DailyMovementTaslim_Notes" />
+                                                </td>
+                                                <td class="text-center">
+                                                    <button type="button" class="btn btn-sm btn-icon" onclick="deleteTaslimRow(this)">
+                                                        <i class="fa-solid fa-trash fs-4 text-danger"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            rowNum++;
+                                        }
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr class="totals-row">
+                                        <td colspan="2" class="text-center fw-bold">إجمالي تسليم للإدارة</td>
+                                        <td class="text-center fw-bold fs-5" id="grandTotalTaslim">0.00</td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <!--end::Table-->
+                    </div>
+                    <!--end::Card body-->
+                </div>
+                <!--end::Taslim Card-->
+                <!--begin::Warid Card-->
+                <div class="card mt-5">
+                    <!--begin::Card header-->
+                    <div class="card-header border-0 pt-6  section-header">
+                        <h3 class="card-title align-items-start flex-column">
+                            <span class="card-label fw-bold fs-3 mb-1">وارد من الإدارة</span>
+                        </h3>
+                    </div>
+                    <!--end::Card header-->
+                    <!--begin::Card body-->
+                    <div class="card-body py-4">
+                        <!--begin::Add Button-->
+                        <div class="mb-5">
+                            <button type="button" class="btn btn-primary" onclick="addNewWaridRow()">
+                                <i class="ki-duotone ki-plus fs-2"></i>
+                                إضافة وارد
+                            </button>
+                        </div>
+                        <!--end::Add Button-->
+                        <!--begin::Table-->
+                        <div class="table-responsive">
+                            <table class="table table-bordered movement-table" id="waridTable">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th style="width: 50px;">م</th>
+                                        <th style="width: 300px;">المستلم / الشخص</th>
+                                        <th style="width: 150px;">المبلغ</th>
+                                        <th style="width: 250px;">ملاحظــة</th>
+                                        <th style="width: 80px;">حذف</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="waridTableBody">
+                                    @if (Model.Warid != null && Model.Warid.Any())
+                                    {
+                                        int rowNum = 1;
+                                        foreach (var warid in Model.Warid)
+                                        {
+                                            <tr class="warid-row">
+                                                <td class="text-center warid-row-number">@rowNum</td>
+                                                <td>
+                                                    <input type="text"
+                                                           class="form-control form-control-sm warid-receiver-input"
+                                                           value="@warid.DailyMovementWarid_Receiver"
+                                                           placeholder="اسم الشخص" />
+                                                </td>
+                                                <td>
+                                                    <input type="number" step="1"
+                                                           class="form-control form-control-sm text-center warid-amount-input"
+                                                           value="@warid.DailyMovementWarid_Amount"
+                                                           min="0" />
+                                                </td>
+                                                <td>
+                                                    <input type="text"
+                                                           class="form-control form-control-sm warid-notes-input"
+                                                           value="@warid.DailyMovementWarid_Notes" />
+                                                </td>
+                                                <td class="text-center">
+                                                    <button type="button" class="btn btn-sm btn-icon" onclick="deleteWaridRow(this)">
+                                                        <i class="fa-solid fa-trash fs-4 text-danger"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            rowNum++;
+                                        }
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr class="totals-row">
+                                        <td colspan="2" class="text-center fw-bold">إجمالي وارد من الإدارة</td>
+                                        <td class="text-center fw-bold fs-5" id="grandTotalWarid">0.00</td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <!--end::Table-->
+                    </div>
+                    <!--end::Card body-->
+                </div>
+                <!--end::Warid Card-->
+                <!--begin::Save Button-->
+                <div class="card mt-5">
+                    <div class="card-body text-center py-6">
+                        <button type="button" class="btn btn-success btn-xl" onclick="saveMovement()" style="padding: 1rem 3rem; font-size: 1.5rem;">
+                            <i class="ki-duotone ki-check fs-1 me-3"></i>
+                            حفظ البيان بالكامل
+                        </button>
+                    </div>
+                </div>
+                <!--end::Save Button-->
+                <!--begin::Balances Card-->
+                <div class="card mt-5">
+                    <!--begin::Card header-->
+                    <div class="card-header border-0 pt-6 section-header">
+                        <h3 class="card-title align-items-start flex-column">
+                            <span class="card-label fw-bold fs-3 mb-1">حركة الرصيد</span>
+                        </h3>
+                    </div>
+                    <!--end::Card header-->
+                    <!--begin::Card body-->
+                    <div class="card-body py-4">
+                        <!--begin::Table-->
+                        <div class="table-responsive">
+                            <table class="table table-bordered movement-table" id="balancesTable">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th style="width: 300px;">حركة الرصيد</th>
+                                        <th style="width: 150px;">المبلـــغ</th>
+                                        <th style="width: 250px;">ملاحظــة</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        var balanceTypes = new Dictionary<string, string>
+                                                                {
+                                                                { "رصيد سابق", "manual" },
+                                                                { "مبلغ وارد من الإدارة +", "deposit" },
+                                                                { "مبلغ وارد من المبيعات +", "deposit" },
+                                                                { "مبلغ وارد سداد عميل +", "deposit" },
+                                                                { "مبلغ مسحوب تسليم للإدارة -", "withdrawal" },
+                                                                { "مبلغ صادر مشتريات -", "withdrawal" },
+                                                                { "مبلغ صادر سداد وارد -", "withdrawal" },
+                                                                { "إجمالي المصروفات -", "withdrawal" }
+                                                                };
+
+                                        foreach (var balanceType in balanceTypes)
+                                        {
+                                            var type = balanceType.Key;
+                                            var rowType = balanceType.Value;
+                                            var balance = Model.Balances?.FirstOrDefault(b => b.DailyMovementBalance_Type == type);
+                                            var isTotal = type.Contains("إجمالي");
+                                            var cssClass = isTotal ? "totals-row" : "";
+                                            var isManual = rowType == "manual";
+                                            var rowClass = rowType == "deposit" ? "balance-deposit" :
+                                            rowType == "withdrawal" ? "balance-withdrawal" : "";
+
+                                            <tr class="balance-row @cssClass @rowClass" data-type="@type">
+                                                <td class="fw-bold">
+                                                    @type
+                                                </td>
+                                                <td>
+                                                    @if (isManual)
+                                                    {
+                                                        <input type="number" class="form-control form-control-sm text-center balance-amount-input"
+                                                               value="@ViewBag.PreviousBalance" readonly />
+                                                    }
+                                                    else
+                                                    {
+                                                        <input type="number" step="0.01"
+                                                               class="form-control form-control-sm text-center balance-amount-input balance-auto-input @(isTotal ? "fw-bold" : "")"
+                                                               data-balance-type="@type"
+                                                               value="@(balance?.DailyMovementBalance_Amount ?? 0)"
+                                                               min="0"
+                                                               readonly
+                                                               style="cursor: not-allowed; background: transparent; border: none;" />
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <input type="text"
+                                                           class="form-control form-control-sm balance-notes-input"
+                                                           value="@(balance?.DailyMovementBalance_Notes ?? "")"
+                                                           placeholder="ملاحظة اختيارية"
+                                                           style="@(rowType != "manual" ? "background: transparent; border: none;" : "")" />
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr class="grand-total-row">
+                                        <td class="text-center fw-bold fs-4">
+                                            <i class="ki-duotone ki-wallet text-success fs-2 me-2"></i>
+                                            الرصيد المتوفر
+                                        </td>
+                                        <td class="text-center fw-bold fs-3" id="availableBalance">0.00</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+
+                            </table>
+                        </div>
+                        <!--end::Table-->
+                    </div>
+                    <!--end::Card body-->
+                </div>
+                <!--end::Balances Card-->
+                @* <!--begin::Balances Card-->
+                <div class="card mt-5">
+                    <!--begin::Card header-->
+                    <div class="card-header border-0 pt-6">
+                        <h3 class="card-title align-items-start flex-column">
+                            <span class="card-label fw-bold fs-3 mb-1">حركة الرصيد :</span>
+                        </h3>
+                    </div>
+                    <!--end::Card header-->
+                    <!--begin::Card body-->
+                    <div class="card-body py-4">
+                        <div class="balances-cards">
+                            @{
+                                var balanceTypes = new Dictionary<string, string>
+                                                {
+                                                { "رصيد سابق", "manual" },
+                                                { "مبلغ وارد من الإدارة +", "deposit" },
+                                                { "مبلغ وارد من المبيعات +", "deposit" },
+                                                { "مبلغ وارد سداد عميل +", "deposit" },
+                                                { "مبلغ مسحوب تسليم للإدارة -", "withdrawal" },
+                                                { "مبلغ صادر مشتريات -", "withdrawal" },
+                                                { "مبلغ صادر سداد وارد -", "withdrawal" },
+                                                { "إجمالي المصروفات -", "withdrawal" }
+                                                };
+
+                                foreach (var balanceType in balanceTypes)
+                                {
+                                    var type = balanceType.Key;
+                                    var rowType = balanceType.Value;
+                                    var balance = Model.Balances?.FirstOrDefault(b => b.DailyMovementBalance_Type == type);
+                                    var isTotal = type.Contains("إجمالي");
+                                    var cssClass = isTotal ? "totals-card" : "";
+                                    var isManual = rowType == "manual";
+                                    var cardClass = rowType == "deposit" ? "border-success" :
+                                    rowType == "withdrawal" ? "border-danger" : "border-secondary";
+
+                                    <div class="balance-card card @cssClass @cardClass mb-3">
+                                        <div class="card-body">
+                                            <div class="row align-items-center">
+                                                <div class="col-12 col-md-5">
+                                                    <h6 class="card-title mb-1">@type</h6>
+                                                </div>
+                                                <div class="col-12 col-md-3">
+                                                    <div class="balance-amount">
+                                                        @if (isManual)
+                                                        {
+                                                            <input type="number"
+                                                                   class="form-control form-control-sm text-center"
+                                                                   value="@ViewBag.PreviousBalance"
+                                                                   readonly />
+                                                        }
+                                                        else
+                                                        {
+                                                            <input type="number" step="0.01"
+                                                                   class="form-control form-control-sm text-center"
+                                                                   value="@(balance?.DailyMovementBalance_Amount ?? 0)"
+                                                                   readonly
+                                                                   style="background: transparent; border: none; font-weight: bold;" />
+                                                        }
+                                                    </div>
+                                                </div>
+                                                <div class="col-12 col-md-4">
+                                                    <div class="balance-notes">
+                                                        <input type="text"
+                                                               class="form-control form-control-sm"
+                                                               value="@(balance?.DailyMovementBalance_Notes ?? "")"
+                                                               placeholder="ملاحظة اختيارية"
+                                                               style="@(rowType != "manual" ? "background: transparent; border: none;" : "")" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+
+                            <!-- الرصيد المتوفر -->
+                            <div class="balance-card card border-primary bg-light">
+                                <div class="card-body text-center">
+                                    <div class="row align-items-center">
+                                        <div class="col-12 col-md-5">
+                                            <h4 class="card-title mb-0">
+                                                <i class="ki-duotone ki-wallet text-success fs-1 me-2"></i>
+                                                الرصيد المتوفر
+                                            </h4>
+                                        </div>
+                                        <div class="col-12 col-md-7">
+                                            <h3 class="text-success mb-0" id="availableBalance">0.00</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!--end::Card body-->
+                </div>
+                <!--end::Balances Card--> *@
+
+
+
+                <!--begin::Quick Add Modals-->
+                <!--begin::Add Product Modal-->
+                <div class="modal fade" id="quickAddProductModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3 class="modal-title">إضافة صنف جديد</h3>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="quickAddProductForm">
+                                    <div class="mb-4">
+                                        <label class="form-label required">اسم الصنف</label>
+                                        <input type="text" class="form-control" id="newProductName" placeholder="أدخل اسم الصنف" required />
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="form-label">السعر</label>
+                                        <input type="number" step="0.01" class="form-control" id="newProductPrice" placeholder="0.00" value="0" />
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">إلغاء</button>
+                                <button type="button" class="btn btn-primary" onclick="saveQuickProduct()">
+                                    <i class="ki-duotone ki-check fs-2"></i>
+                                    حفظ وإضافة
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--end::Add Product Modal-->
+                <!--begin::Add Customer Modal-->
+                <div class="modal fade" id="quickAddCustomerModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3 class="modal-title">إضافة عميل جديد</h3>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="quickAddCustomerForm">
+                                    <div class="mb-4">
+                                        <label class="form-label required">اسم العميل</label>
+                                        <input type="text" class="form-control" id="newCustomerName" placeholder="أدخل اسم العميل" required />
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="form-label">رقم الهاتف</label>
+                                        <input type="text" class="form-control" id="newCustomerPhone" placeholder="رقم الهاتف" />
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="form-label">العنوان</label>
+                                        <input type="text" class="form-control" id="newCustomerAddress" placeholder="العنوان" />
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">إلغاء</button>
+                                <button type="button" class="btn btn-primary" onclick="saveQuickCustomer()">
+                                    <i class="ki-duotone ki-check fs-2"></i>
+                                    حفظ وإضافة
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--end::Add Customer Modal-->
+                <!--begin::Add Supplier Modal-->
+                <div class="modal fade" id="quickAddSupplierModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3 class="modal-title">إضافة مورد جديد</h3>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="quickAddSupplierForm">
+                                    <div class="mb-4">
+                                        <label class="form-label required">اسم المورد</label>
+                                        <input type="text" class="form-control" id="newSupplierName" placeholder="أدخل اسم المورد" required />
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="form-label">رقم الهاتف</label>
+                                        <input type="text" class="form-control" id="newSupplierPhone" placeholder="رقم الهاتف" />
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="form-label">العنوان</label>
+                                        <input type="text" class="form-control" id="newSupplierAddress" placeholder="العنوان" />
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">إلغاء</button>
+                                <button type="button" class="btn btn-primary" onclick="saveQuickSupplier()">
+                                    <i class="ki-duotone ki-check fs-2"></i>
+                                    حفظ وإضافة
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--end::Add Supplier Modal-->
+                <!--begin::Add Expense Item Modal-->
+                <div class="modal fade" id="quickAddExpenseModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3 class="modal-title">إضافة بند مصروف جديد</h3>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="quickAddExpenseForm">
+                                    <div class="mb-4">
+                                        <label class="form-label required">اسم البند</label>
+                                        <input type="text" class="form-control" id="newExpenseName" placeholder="أدخل اسم البند" required />
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">إلغاء</button>
+                                <button type="button" class="btn btn-primary" onclick="saveQuickExpenseItem()">
+                                    <i class="ki-duotone ki-check fs-2"></i>
+                                    حفظ وإضافة
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--end::Add Expense Item Modal-->
+                <!--end::Quick Add Modals-->
+                <!--end::Card-->
+            }
+        </div>
+        <!--end::Content container-->
+    </div>
+    <!--end::Content-->
+</div>
+<!--end::Content wrapper-->
+@section Scripts
+{
+    <script src="~/assets/plugins/global/plugins.bundle.js"></script>
+
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+
+    <script src="~/js/DailyMovement.js"></script>
+
+    <script>
+
+
+        // Pass data as JSON to JavaScript
+        var productsData = @Html.Raw(Json.Serialize(ViewBag.Products ?? new List<TblProduct>()));
+        var categoriesData = @Html.Raw(Json.Serialize(ViewBag.ExpenseCategories ?? new List<TblExpense_Item>()));
+        var suppliersData = @Html.Raw(Json.Serialize(ViewBag.Suppliers ?? new List<TblSupplier>()));
+        var customersData = @Html.Raw(Json.Serialize(ViewBag.Customers ?? new List<TblCustomer>()));
+
+        // Build products HTML
+        function buildProductsHTML() {
+            let html = '<option value="">اختر الصنف</option>';
+            productsData.forEach(function(product) {
+                const price = product.product_Price || 0;
+                html += `<option value="${product.product_ID}" data-price="${price}">${product.product_Name}</option>`;
+            });
+            return html;
+        }
+
+        // Build categories HTML
+        function buildCategoriesHTML() {
+            let html = '<option value="">اختر البند</option>';
+            categoriesData.forEach(function(category) {
+                html += `<option value="${category.expenseItem_ID}">${category.expenseItem_Name}</option>`;
+            });
+            return html;
+        }
+
+        // Build suppliers HTML
+        function buildSuppliersHTML() {
+            let html = '<option value="">اختر المورد</option>';
+            suppliersData.forEach(function(supplier) {
+                html += `<option value="${supplier.supplier_ID}">${supplier.supplier_Name}</option>`;
+            });
+            return html;
+        }
+
+        // Build customers HTML
+        function buildCustomersHTML() {
+            let html = '<option value="">اختر العميل</option>';
+            customersData.forEach(function(customer) {
+                html += `<option value="${customer.customer_ID}">${customer.customer_Name}</option>`;
+            });
+            return html;
+        }
+
+        // Store in global variables
+        window.productsHTML = buildProductsHTML();
+        window.categoriesHTML = buildCategoriesHTML();
+        window.suppliersHTML = buildSuppliersHTML();
+        window.customersHTML = buildCustomersHTML();
+
+    </script>
+}

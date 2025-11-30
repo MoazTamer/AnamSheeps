@@ -1,0 +1,210 @@
+﻿@model List<SalesModel.ViewModels.UserMovementTracking>
+@{
+    ViewData["Title"] = "متابعة حركات المستودعات";
+    ViewData["Page"] = "متابعة حركات المستودعات";
+    var selectedDate = (DateTime)ViewBag.SelectedDate;
+}
+
+<div class="d-flex flex-column flex-column-fluid">
+    <div id="kt_app_content" class="app-content flex-column-fluid">
+        <div id="kt_app_content_container" class="app-container container-fluid">
+
+            <!--begin::Page header-->
+            <div class="card mb-5">
+                <div class="card-body d-flex align-items-center justify-content-between py-5">
+                    <h1 class="page-heading d-flex flex-column align-items-start mb-0">
+                        <span class="text-dark fw-bold fs-1">متابعة حركات المستودعات</span>
+                        <span class="text-muted mt-1 fw-semibold fs-6">عرض ومتابعة بيانات المستودعات اليومية</span>
+                    </h1>
+
+                    <!--begin::Date Filter-->
+                    <div class="d-flex align-items-center gap-3">
+                        <form method="get" class="d-flex align-items-center gap-3">
+                            <label class="form-label fw-bold mb-0">اختر التاريخ:</label>
+                            <input type="date" name="date" class="form-control form-control-solid"
+                                   value="@selectedDate.ToString("yyyy-MM-dd")"
+                                   onchange="this.form.submit()" />
+                        </form>
+                    </div>
+                    <!--end::Date Filter-->
+                </div>
+            </div>
+            <!--end::Page header-->
+            <!--begin::Summary Cards-->
+            <div class="row g-5 mb-5">
+                <div class="col-md-3">
+                    <div class="card card-flush h-100">
+                        <div class="card-body text-center">
+                            <i class="ki-duotone ki-home fs-3x text-primary mb-3">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            <div class="fs-2hx fw-bold text-gray-800">@Model.Count</div>
+                            <div class="fs-6 text-gray-400 fw-semibold">إجمالي المستودعات</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card card-flush h-100 bg-success bg-opacity-10">
+                        <div class="card-body text-center">
+                            <i class="ki-duotone ki-check-circle fs-3x text-success mb-3">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            <div class="fs-2hx fw-bold text-success">@Model.Count(m => m.HasMovement)</div>
+                            <div class="fs-6 text-gray-600 fw-semibold">تم الإدخال</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card card-flush h-100 bg-danger bg-opacity-10">
+                        <div class="card-body text-center">
+                            <i class="ki-duotone ki-close-circle fs-3x text-danger mb-3">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            <div class="fs-2hx fw-bold text-danger">@Model.Count(m => !m.HasMovement)</div>
+                            <div class="fs-6 text-gray-600 fw-semibold">لم يتم الإدخال</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card card-flush h-100 bg-info bg-opacity-10">
+                        <div class="card-body text-center">
+                            <i class="ki-duotone ki-box fs-3x text-info mb-3">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            @* <div class="fs-2hx fw-bold text-info">@Model.Where(m => m.HasMovement).Sum(m => m.TotalLivestock)</div> *@
+                            @* <div class="fs-6 text-gray-600 fw-semibold">إجمالي الحلال الموجود</div> *@
+                            <div class="fs-2hx fw-bold text-warning">@((Model.Count(m => m.HasMovement) * 100 / Math.Max(Model.Count, 1)).ToString("0"))%</div>
+                            <div class="fs-6 text-gray-600 fw-semibold">نسبة الإدخال</div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--end::Summary Cards-->
+            <!--begin::Movements List-->
+            <div class="card">
+                <div class="card-header border-0 pt-6">
+                    <h3 class="card-title align-items-start flex-column">
+                        <span class="card-label fw-bold fs-3 mb-1">قائمة أمناء المستودعات</span>
+                        <span class="text-muted mt-1 fw-semibold fs-7">التاريخ: @selectedDate.ToString("yyyy-MM-dd")</span>
+                    </h3>
+                </div>
+                <div class="card-body py-4">
+                    <div class="table-responsive">
+                        <table class="table table-row-bordered table-row-gray-100 align-middle gs-0 gy-3">
+                            <thead>
+                                <tr class="fw-bold text-muted bg-light">
+                                    <th class="min-w-50px">م</th>
+                                    <th class="min-w-150px">اسم أمين المستودع</th>
+                                    <th class="min-w-120px text-center">حالة البيان</th>
+                                    @* <th class="min-w-100px text-center">النفوق</th> *@
+                                    @* <th class="min-w-100px text-center">الحلال الموجود</th> *@
+                                    @* <th class="min-w-100px text-center">الخارج</th> *@
+                                    <th class="min-w-150px text-center">آخر تحديث</th>
+                                    <th class="min-w-100px text-center">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    int rowIndex = 1;
+                                }
+                                @foreach (var item in Model.OrderByDescending(m => m.HasMovement).ThenBy(m => m.UserName))
+                                {
+                                    <tr>
+                                        <td class="text-dark fw-bold">@rowIndex</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="symbol symbol-40px me-3">
+                                                    <span class="symbol-label bg-light-info text-info fs-6 fw-bold">
+                                                        @item.UserName.Substring(0, 1)
+                                                    </span>
+                                                </div>
+                                                <div class="d-flex justify-content-start flex-column">
+                                                    <span class="text-dark fw-bold fs-6">@item.UserName</span>
+                                                    <span class="text-muted fw-semibold text-muted d-block fs-7">@item.UserType</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge badge-light-@item.StatusBadge fs-7 fw-bold">
+                                                <i class="ki-duotone @item.StatusIcon fs-5 me-1">
+                                                    <span class="path1"></span>
+                                                    <span class="path2"></span>
+                                                </i>
+                                                @item.StatusText
+                                            </span>
+                                        </td>
+                                        @* <td class="text-center">
+                                            @if (item.HasMovement)
+                                            {
+                                                <span class="badge badge-light-danger fs-7">@item.TotalMortality</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td> *@
+                                        @* <td class="text-center">
+                                            @if (item.HasMovement)
+                                            {
+                                                <span class="badge badge-light-success fs-7">@item.TotalLivestock</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            @if (item.HasMovement)
+                                            {
+                                                <span class="badge badge-light-warning fs-7">@item.TotalOutgoing</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td> *@
+                                        <td class="text-center">
+                                            @if (item.LastUpdateDate.HasValue)
+                                            {
+                                                <span class="text-muted fw-semibold">@item.LastUpdateDate.Value.ToString("hh:mm tt")</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            @if (item.HasMovement)
+                                            {
+                                                <a href="@Url.Action("ViewWarehouseMovement", "ManagementDashboard", new { movementId = item.MovementId })"
+                                                   class="btn btn-sm btn-light-primary">
+                                                    <i class="ki-duotone ki-eye fs-5">
+                                                        <span class="path1"></span>
+                                                        <span class="path2"></span>
+                                                        <span class="path3"></span>
+                                                    </i>
+                                                    عرض
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted fs-7">لا يوجد بيان</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                    rowIndex++;
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!--end::Movements List-->
+        </div>
+    </div>
+</div>
