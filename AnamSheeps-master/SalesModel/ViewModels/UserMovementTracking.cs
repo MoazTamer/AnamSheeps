@@ -10,9 +10,9 @@ namespace SalesModel.ViewModels
     {
         public string UserId { get; set; }
         public string UserName { get; set; }
-        public string UserType { get; set; } // مندوب أو أمين مستودع
+        public string UserType { get; set; } 
         public DateTime MovementDate { get; set; }
-        public bool HasMovement { get; set; } // هل أدخل بيان اليوم؟
+        public bool HasMovement { get; set; } 
         public int MovementId { get; set; }
         public DateTime? LastUpdateDate { get; set; }
         public decimal? LastBalance { get; set; }
@@ -23,9 +23,9 @@ namespace SalesModel.ViewModels
         public decimal AvailableBalance { get; set; }
 
         // لأمناء المستودعات
-        public int TotalMortality { get; set; } // النفوق
-        public int TotalLivestock { get; set; } // الحلال الموجود
-        public int TotalOutgoing { get; set; } // الخارج من المزرعة
+        public int TotalMortality { get; set; } 
+        public int TotalLivestock { get; set; } 
+        public int TotalOutgoing { get; set; } 
 
         // حالة البيان
         public string StatusBadge => HasMovement ? "success" : "danger";

@@ -22,6 +22,8 @@ namespace SalesModel.ViewModels
         public List<ModelDailyMovementWarid> Warid { get; set; } = new List<ModelDailyMovementWarid>();
 
         public List<ModelDailyMovementBalances> Balances { get; set; }
+        public DateTime? DailyMovement_AddDate { get; set; }
+        public DateTime? DailyMovement_EditDate { get; set; }
 
 
 
@@ -37,6 +39,7 @@ namespace SalesModel.ViewModels
         public decimal DailyMovementDetails_Total { get; set; }
         public string DailyMovementDetails_PaymentType { get; set; }
         public string? DailyMovementDetails_Notes { get; set; }
+        public int DailyMovementDetails_MovementID { get; set; }
     }
     public class ModelDailyMovementSales
     {
@@ -48,6 +51,7 @@ namespace SalesModel.ViewModels
         public decimal DailyMovementSales_Total { get; set; }
         public string DailyMovementSales_PaymentType { get; set; }
         public string? DailyMovementSales_Notes { get; set; }
+        public int DailyMovementSales_MovementID { get; set; }
     }
     public class ModelDailyMovementExpenses
     {
@@ -60,6 +64,7 @@ namespace SalesModel.ViewModels
         public decimal DailyMovementExpense_Amount { get; set; }
         public decimal DailyMovementExpense_Total { get; set; }
         public string? DailyMovementExpense_Notes { get; set; }
+        public int DailyMovementExpense_MovementID { get; set; }
     }
 
         public class ModelDailyMovementSuppliers
@@ -70,7 +75,8 @@ namespace SalesModel.ViewModels
             public string DailyMovementSupplier_SupplierName { get; set; }
             public decimal DailyMovementSupplier_Amount { get; set; }
             public string? DailyMovementSupplier_Notes { get; set; }
-        }
+        public int DailyMovementSupplier_MovementID { get; set; }
+    }
 
         public class ModelDailyMovementCustomers
         {
@@ -79,7 +85,8 @@ namespace SalesModel.ViewModels
             public string? Customer_Name { get; set; }
             public decimal DailyMovementCustomer_Amount { get; set; }
             public string? DailyMovementCustomer_Notes { get; set; }
-        }
+        public int DailyMovementCustomer_MovementID { get; set; }
+    }
 
         public class ModelDailyMovementTaslim
         {
@@ -105,5 +112,6 @@ namespace SalesModel.ViewModels
         public string DailyMovementBalance_Type { get; set; }
         public decimal DailyMovementBalance_Amount { get; set; }
         public string? DailyMovementBalance_Notes { get; set; }
+        public int DailyMovementBalance_MovementID { get; set; }
     }
 }

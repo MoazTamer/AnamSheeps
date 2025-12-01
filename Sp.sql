@@ -1,6 +1,5 @@
 ﻿use AnamSheeps;
 
-
 ALTER PROCEDURE SP_GetDailyMovementData
     @UserId NVARCHAR(450),
     @TargetDate DATE
@@ -411,6 +410,7 @@ BEGIN
 END
 GO
 
+--------------
 ALTER PROCEDURE SP_GetWarehouseMovementData
     @UserId NVARCHAR(450),
     @TargetDate DATE
@@ -431,7 +431,7 @@ BEGIN
         SELECT WarehouseMovement_ID
         FROM TblWarehouseMovement
         WHERE WarehouseMovement_UserID = @UserId
-          AND CAST(WarehouseMovement_Date AS DATE) = @TargetDate
+          AND WarehouseMovement_Date  = @TargetDate
           AND WarehouseMovement_Visible = 'Yes'
     )
     AND m.WarehouseMortality_Visible = 'Yes';
@@ -603,3 +603,163 @@ BEGIN
     END CATCH
 END
 GO
+
+--------------
+
+ALTER PROCEDURE SP_GetDailyMovementsTracking
+    @TargetDate DATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT *
+    FROM AspNetUsers
+    WHERE Visible = 'Yes'
+    ORDER BY UserName;
+
+    SELECT 
+        dm.*
+    FROM TblDailyMovements dm
+    INNER JOIN AspNetUsers u ON u.Id = dm.DailyMovement_UserID
+    WHERE dm.DailyMovement_Date = @TargetDate
+      AND dm.DailyMovement_Visible = 'yes'
+      AND u.Visible = 'Yes';
+
+    SELECT 
+        dm.*
+    FROM TblDailyMovements dm
+    INNER JOIN AspNetUsers u ON u.Id = dm.DailyMovement_UserID
+    WHERE dm.DailyMovement_Visible = 'yes'
+      AND u.Visible = 'Yes'
+      AND dm.DailyMovement_Date = (
+            SELECT TOP 1 DailyMovement_Date
+            FROM TblDailyMovements
+            WHERE DailyMovement_UserID = dm.DailyMovement_UserID
+              AND DailyMovement_Visible = 'yes'
+              AND DailyMovement_Date < @TargetDate
+            ORDER BY DailyMovement_Date DESC
+      );
+
+END
+GO
+
+
+ALTER PROCEDURE SP_ViewDailyMovement
+    @MovementId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+
+    SELECT *
+    FROM TblDailyMovements
+    WHERE DailyMovement_ID = @MovementId
+      AND DailyMovement_Visible = 'yes';
+
+    SELECT d.*, p.Product_Name
+    FROM TblDailyMovementDetails d
+    LEFT JOIN TblProduct p ON p.Product_ID = d.DailyMovementDetails_ProductID
+    WHERE d.DailyMovementDetails_MovementID = @MovementId
+      AND d.DailyMovementDetails_Visible = 'yes';
+
+    SELECT s.*, p.Product_Name
+    FROM TblDailyMovementSales s
+    LEFT JOIN TblProduct p ON p.Product_ID = s.DailyMovementSales_ProductID
+    WHERE s.DailyMovementSales_MovementID = @MovementId
+      AND s.DailyMovementSales_Visible = 'yes';
+
+    SELECT *
+    FROM TblDailyMovementExpenses
+    WHERE DailyMovementExpense_MovementID = @MovementId
+      AND DailyMovementExpense_Visible = 'yes';
+
+
+    SELECT *
+    FROM TblDailyMovementSuppliers
+    WHERE DailyMovementSupplier_MovementID = @MovementId
+      AND DailyMovementSupplier_Visible = 'yes';
+
+    SELECT *
+    FROM TblDailyMovementCustomers
+    WHERE DailyMovementCustomer_MovementID = @MovementId
+      AND DailyMovementCustomer_Visible = 'yes';
+
+    SELECT *
+    FROM TblDailyMovementWarid
+    WHERE DailyMovementWarid_MovementID = @MovementId
+      AND DailyMovementWarid_Visible = 'yes';
+
+
+    SELECT *
+    FROM TblDailyMovementTaslim
+    WHERE DailyMovementTaslim_MovementID = @MovementId
+      AND DailyMovementTaslim_Visible = 'yes';
+
+
+    SELECT *
+    FROM TblDailyMovementBalances
+    WHERE DailyMovementBalance_MovementID = @MovementId
+      AND DailyMovementBalance_Visible = 'yes';
+
+END
+GO
+
+
+Alter PROCEDURE SP_ViewAllDailyMovements
+    @TargetDate DATE
+AS
+BEGIN
+    DECLARE @Movement TABLE (ID INT);
+
+    INSERT INTO @Movement
+    SELECT DailyMovement_ID
+    FROM TblDailyMovements
+    WHERE DailyMovement_Date = @TargetDate
+      AND DailyMovement_Visible = 'yes';
+
+    SELECT * 
+    FROM TblDailyMovements
+    WHERE DailyMovement_ID IN (SELECT ID FROM @Movement);
+
+    SELECT d.*, p.*
+    FROM TblDailyMovementDetails d
+    JOIN TblProduct p ON d.DailyMovementDetails_ProductID = p.Product_ID
+    JOIN @Movement m ON d.DailyMovementDetails_MovementID = m.ID
+    WHERE d.DailyMovementDetails_Visible = 'yes';
+
+    SELECT s.*, p.*
+    FROM TblDailyMovementSales s
+    JOIN TblProduct p ON s.DailyMovementSales_ProductID = p.Product_ID
+    JOIN @Movement m ON s.DailyMovementSales_MovementID = m.ID
+    WHERE s.DailyMovementSales_Visible = 'yes';
+
+    SELECT e.*
+    FROM TblDailyMovementExpenses e
+    JOIN @Movement m ON e.DailyMovementExpense_MovementID = m.ID
+    WHERE e.DailyMovementExpense_Visible = 'yes';
+
+    SELECT s.*
+    FROM TblDailyMovementSuppliers s
+    JOIN @Movement m ON s.DailyMovementSupplier_MovementID = m.ID
+    WHERE s.DailyMovementSupplier_Visible = 'yes';
+
+    SELECT c.*
+    FROM TblDailyMovementCustomers c
+    JOIN @Movement m ON c.DailyMovementCustomer_MovementID = m.ID
+    WHERE c.DailyMovementCustomer_Visible = 'yes';
+
+    SELECT w.*
+    FROM TblDailyMovementWarid w
+    JOIN @Movement m ON w.DailyMovementWarid_MovementID = m.ID
+    WHERE w.DailyMovementWarid_Visible = 'yes';
+
+    SELECT t.*
+    FROM TblDailyMovementTaslim t
+    JOIN @Movement m ON t.DailyMovementTaslim_MovementID = m.ID
+    WHERE t.DailyMovementTaslim_Visible = 'yes';
+
+    SELECT b.*
+    FROM TblDailyMovementBalances b
+    JOIN @Movement m ON b.DailyMovementBalance_MovementID = m.ID
+    WHERE b.DailyMovementBalance_Visible = 'yes';
+END

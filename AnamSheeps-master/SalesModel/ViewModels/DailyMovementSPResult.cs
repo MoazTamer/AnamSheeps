@@ -9,6 +9,7 @@ namespace SalesModel.ViewModels
 {
     public class DailyMovementSPResult
     {
+        public ModelDailyMovement? OneMovement { get; set; }
         public IEnumerable<ModelDailyMovement> Movement { get; set; }
         public IEnumerable<ModelDailyMovementDetails> Details { get; set; }
         public IEnumerable<ModelDailyMovementSales> Sales { get; set; }
@@ -21,6 +22,13 @@ namespace SalesModel.ViewModels
         public decimal? PreviousBalance { get; set; }
         public string? UserName { get; set; }
     }
+    public class DailyMovementListSPResult
+    {
+        public IEnumerable<ModelUsers> Users { get; set; }
+        public IEnumerable<ModelDailyMovement> TodayMovements { get; set; }
+        public IEnumerable<ModelDailyMovement> LastMovements { get; set; }
+    }
+
 
     public class WarehouseMovementSPResult
     {

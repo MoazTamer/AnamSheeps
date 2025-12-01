@@ -82,6 +82,76 @@ namespace SalesRepository.Repository
             }
         }
 
+        public DailyMovementListSPResult DailyMovementList(string procedureName, DynamicParameters param = null)
+        {
+            using (SqlConnection sqlCon = new SqlConnection(ConnectionString))
+            {
+                sqlCon.Open();
+                using (var multi = sqlCon.QueryMultiple(procedureName, param, commandType: CommandType.StoredProcedure))
+                {
+                    var result = new DailyMovementListSPResult();
+
+                    result.Users = multi.Read<ModelUsers>().ToList();
+
+                    result.TodayMovements = multi.Read<ModelDailyMovement>().ToList();
+
+                    result.LastMovements = multi.Read<ModelDailyMovement>().ToList();
+
+                    return result;
+                }
+            }
+        }
+
+
+        public DailyMovementSPResult ViewDailyMovement(string procedureName, DynamicParameters param)
+        {
+            using (var con = new SqlConnection(ConnectionString))
+            {
+                con.Open();
+
+                using (var multi = con.QueryMultiple(procedureName, param, commandType: CommandType.StoredProcedure))
+                {
+                    var result = new DailyMovementSPResult();
+
+                    result.OneMovement = multi.Read<ModelDailyMovement>().FirstOrDefault();
+                    result.Details = multi.Read<ModelDailyMovementDetails>().ToList();
+                    result.Sales = multi.Read<ModelDailyMovementSales>().ToList();
+                    result.Expenses = multi.Read<ModelDailyMovementExpenses>().ToList();
+                    result.Suppliers = multi.Read<ModelDailyMovementSuppliers>().ToList();
+                    result.Customers = multi.Read<ModelDailyMovementCustomers>().ToList();
+                    result.Warid = multi.Read<ModelDailyMovementWarid>().ToList();
+                    result.Taslim = multi.Read<ModelDailyMovementTaslim>().ToList();
+                    result.Balances = multi.Read<ModelDailyMovementBalances>().ToList();
+
+                    return result;
+                }
+            }
+        }
+
+        public DailyMovementSPResult ViewAllDailyMovementsSP(string procedureName, DynamicParameters param)
+        {
+            using (var con = new SqlConnection(ConnectionString))
+            {
+                con.Open();
+                using (var multi = con.QueryMultiple(procedureName, param, commandType: CommandType.StoredProcedure))
+                {
+                    var result = new DailyMovementSPResult();
+
+                    result.Movement = multi.Read<ModelDailyMovement>().ToList();
+                    result.Details = multi.Read<ModelDailyMovementDetails>().ToList();
+                    result.Sales = multi.Read<ModelDailyMovementSales>().ToList();
+                    result.Expenses = multi.Read<ModelDailyMovementExpenses>().ToList();
+                    result.Suppliers = multi.Read<ModelDailyMovementSuppliers>().ToList();
+                    result.Customers = multi.Read<ModelDailyMovementCustomers>().ToList();
+                    result.Warid = multi.Read<ModelDailyMovementWarid>().ToList();
+                    result.Taslim = multi.Read<ModelDailyMovementTaslim>().ToList();
+                    result.Balances = multi.Read<ModelDailyMovementBalances>().ToList();
+
+                    return result;
+                }
+            }
+        }
+
         public DailyMovementSPResult MultiList(string procedureName, DynamicParameters param = null)
         {
             using (SqlConnection sqlCom = new SqlConnection(ConnectionString))
