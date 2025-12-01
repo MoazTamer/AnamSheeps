@@ -74,64 +74,7 @@ namespace Sales.Controllers
         }
 
 
-        public async Task<IActionResult> WarehouseMovementsTracking(DateTime? date)
-        {
-            var selectedDate = date ?? DateTime.Today;
-
-            var warehouseKeepers = await _userManager.Users
-                .Where(u => u.Visible == "Yes")
-                .OrderBy(u => u.UserName)
-                .ToListAsync();
-
-            var trackingList = new List<UserMovementTracking>();
-
-            foreach (var keeper in warehouseKeepers)
-            {
-                var movement = _unitOfWork.WarehouseMovement.GetFirstOrDefault(
-                    m => m.WarehouseMovement_UserID == keeper.Id &&
-                         m.WarehouseMovement_Date.Date == selectedDate.Date &&
-                         m.WarehouseMovement_Visible == "Yes"
-                );
-
-                var tracking = new UserMovementTracking
-                {
-                    UserId = keeper.Id,
-                    UserName = keeper.UserName,
-                    UserType = keeper.UserType,
-                    MovementDate = selectedDate,
-                    HasMovement = movement != null,
-                    MovementId = movement?.WarehouseMovement_ID ?? 0,
-                    LastUpdateDate = movement?.WarehouseMovement_EditDate ?? movement?.WarehouseMovement_AddDate
-                };
-
-                if (movement != null)
-                {
-                    var mortalities = _unitOfWork.WarehouseMortality.GetAll(
-                        m => m.WarehouseMortality_MovementID == movement.WarehouseMovement_ID &&
-                             m.WarehouseMortality_Visible == "Yes"
-                    );
-                    tracking.TotalMortality = mortalities.Sum(m => m.WarehouseMortality_Quantity);
-
-                    var livestocks = _unitOfWork.WarehouseLivestock.GetAll(
-                        l => l.WarehouseLivestock_MovementID == movement.WarehouseMovement_ID &&
-                             l.WarehouseLivestock_Visible == "Yes"
-                    );
-                    tracking.TotalLivestock = livestocks.Sum(l => l.WarehouseLivestock_Quantity);
-
-                    var outgoings = _unitOfWork.WarehouseOutgoing.GetAll(
-                        o => o.WarehouseOutgoing_MovementID == movement.WarehouseMovement_ID &&
-                             o.WarehouseOutgoing_Visible == "Yes"
-                    );
-                    tracking.TotalOutgoing = outgoings.Sum(o => o.WarehouseOutgoing_Quantity);
-                }
-
-                trackingList.Add(tracking);
-            }
-
-            ViewBag.SelectedDate = selectedDate;
-            return View(trackingList);
-        }
-
+       
         public IActionResult ViewDailyMovement(int movementId)
         {
             var param = new DynamicParameters();
@@ -160,55 +103,6 @@ namespace Sales.Controllers
             ViewBag.IsReadOnly = true;
 
             return View(model);
-        }
-
-        public async Task<IActionResult> ViewWarehouseMovement(int movementId)
-        {
-            try
-            {
-                var movement = _unitOfWork.WarehouseMovement.GetById(movementId);
-
-                if (movement == null || movement.WarehouseMovement_Visible != "Yes")
-                {
-                    return NotFound();
-                }
-
-                var model = new ModelWarehouseMovement
-                {
-                    WarehouseMovement_ID = movement.WarehouseMovement_ID,
-                    WarehouseMovement_Date = movement.WarehouseMovement_Date,
-                    WarehouseMovement_UserID = movement.WarehouseMovement_UserID
-                };
-
-                model.Mortalities = _unitOfWork.WarehouseMortality.GetAll(
-                    m => m.WarehouseMortality_MovementID == movement.WarehouseMovement_ID &&
-                         m.WarehouseMortality_Visible == "Yes"
-                ).ToList();
-
-                model.Livestocks = _unitOfWork.WarehouseLivestock.GetAll(
-                    l => l.WarehouseLivestock_MovementID == movement.WarehouseMovement_ID &&
-                         l.WarehouseLivestock_Visible == "Yes"
-                ).ToList();
-
-                model.Outgoings = _unitOfWork.WarehouseOutgoing.GetAll(
-                    o => o.WarehouseOutgoing_MovementID == movement.WarehouseMovement_ID &&
-                         o.WarehouseOutgoing_Visible == "Yes"
-                ).ToList();
-
-                ViewBag.Products = _unitOfWork.Product.GetAll(p => p.Product_Visible == "Yes").ToList();
-
-                var user = await _userManager.FindByIdAsync(movement.WarehouseMovement_UserID);
-                ViewBag.UserName = user?.UserName ?? "غير معروف";
-                ViewBag.IsReadOnly = true;
-
-                return View(model);
-            }
-            catch (Exception ex)
-            {
-                ViewBag.Type = "error";
-                ViewBag.Message = "حدث خطأ أثناء تحميل البيان: " + ex.Message;
-                return View();
-            }
         }
 
 
@@ -277,5 +171,114 @@ namespace Sales.Controllers
             return View(model);
         }
 
+
+
+        public async Task<IActionResult> WarehouseMovementsTracking(DateTime? date)
+        {
+            var selectedDate = date ?? DateTime.Today;
+
+            var warehouseKeepers = await _userManager.Users
+                .Where(u => u.Visible == "Yes")
+                .OrderBy(u => u.UserName)
+                .ToListAsync();
+
+            var movements = _unitOfWork.WarehouseMovement.GetAll(m =>
+                m.WarehouseMovement_Date.Date == selectedDate.Date &&
+                m.WarehouseMovement_Visible == "Yes"
+            ).ToList();
+
+            var mortalities = _unitOfWork.WarehouseMortality.GetAll(m => m.WarehouseMortality_Visible == "Yes").ToList();
+            var livestocks = _unitOfWork.WarehouseLivestock.GetAll(l => l.WarehouseLivestock_Visible == "Yes").ToList();
+            var outgoings = _unitOfWork.WarehouseOutgoing.GetAll(o => o.WarehouseOutgoing_Visible == "Yes").ToList();
+
+            var trackingList = new List<UserMovementTracking>();
+
+            foreach (var keeper in warehouseKeepers)
+            {
+                var movement = movements.FirstOrDefault(m => m.WarehouseMovement_UserID == keeper.Id);
+
+                var tracking = new UserMovementTracking
+                {
+                    UserId = keeper.Id,
+                    UserName = keeper.UserName,
+                    UserType = keeper.UserType,
+                    MovementDate = selectedDate,
+                    HasMovement = movement != null,
+                    MovementId = movement?.WarehouseMovement_ID ?? 0,
+                    LastUpdateDate = movement?.WarehouseMovement_EditDate ?? movement?.WarehouseMovement_AddDate
+                };
+
+                if (movement != null)
+                {
+                    tracking.TotalMortality = mortalities
+                        .Where(m => m.WarehouseMortality_MovementID == movement.WarehouseMovement_ID)
+                        .Sum(m => m.WarehouseMortality_Quantity);
+
+                    tracking.TotalLivestock = livestocks
+                        .Where(l => l.WarehouseLivestock_MovementID == movement.WarehouseMovement_ID)
+                        .Sum(l => l.WarehouseLivestock_Quantity);
+
+                    tracking.TotalOutgoing = outgoings
+                        .Where(o => o.WarehouseOutgoing_MovementID == movement.WarehouseMovement_ID)
+                        .Sum(o => o.WarehouseOutgoing_Quantity);
+                }
+
+                trackingList.Add(tracking);
+            }
+
+            ViewBag.SelectedDate = selectedDate;
+            return View(trackingList);
+        }
+
+        public async Task<IActionResult> ViewWarehouseMovement(int movementId)
+        {
+            try
+            {
+                var movement = _unitOfWork.WarehouseMovement.GetById(movementId);
+
+                if (movement == null || movement.WarehouseMovement_Visible != "Yes")
+                {
+                    return NotFound();
+                }
+
+                var model = new ModelWarehouseMovement
+                {
+                    WarehouseMovement_ID = movement.WarehouseMovement_ID,
+                    WarehouseMovement_Date = movement.WarehouseMovement_Date,
+                    WarehouseMovement_UserID = movement.WarehouseMovement_UserID
+                };
+
+                model.Mortalities = _unitOfWork.WarehouseMortality.GetAll(
+                    m => m.WarehouseMortality_MovementID == movement.WarehouseMovement_ID &&
+                         m.WarehouseMortality_Visible == "Yes"
+                ).ToList();
+
+                model.Livestocks = _unitOfWork.WarehouseLivestock.GetAll(
+                    l => l.WarehouseLivestock_MovementID == movement.WarehouseMovement_ID &&
+                         l.WarehouseLivestock_Visible == "Yes"
+                ).ToList();
+
+                model.Outgoings = _unitOfWork.WarehouseOutgoing.GetAll(
+                    o => o.WarehouseOutgoing_MovementID == movement.WarehouseMovement_ID &&
+                         o.WarehouseOutgoing_Visible == "Yes"
+                ).ToList();
+
+                ViewBag.Products = _unitOfWork.Product.GetAll(p => p.Product_Visible == "Yes").ToList();
+
+                var user = await _userManager.FindByIdAsync(movement.WarehouseMovement_UserID);
+                ViewBag.UserName = user?.UserName ?? "غير معروف";
+                ViewBag.IsReadOnly = true;
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Type = "error";
+                ViewBag.Message = "حدث خطأ أثناء تحميل البيان: " + ex.Message;
+                return View();
+            }
+        }
+
     }
+
 }
