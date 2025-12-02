@@ -224,15 +224,18 @@ BEGIN
             INSERT INTO TblDailyMovementSuppliers (
                 DailyMovementSupplier_MovementID, DailyMovementSupplier_SupplierID,
                 DailyMovementSupplier_SupplierName, DailyMovementSupplier_Amount,
-                DailyMovementSupplier_Notes, DailyMovementSupplier_Visible
+                DailyMovementSupplier_PaymentType, DailyMovementSupplier_Notes, 
+                DailyMovementSupplier_Visible
             )
             SELECT 
-                @MovementId, SupplierID, ISNULL(SupplierName, ''), Amount, ISNULL(Notes, ''), 'yes'
+                @MovementId, SupplierID, ISNULL(SupplierName, ''), Amount,
+                PaymentType, ISNULL(Notes, ''), 'yes'
             FROM OPENJSON(@SuppliersJson)
             WITH (
                 SupplierID INT '$.DailyMovementSupplier_SupplierID',
                 SupplierName NVARCHAR(200) '$.Supplier_Name',
                 Amount DECIMAL(18,2) '$.DailyMovementSupplier_Amount',
+                PaymentType NVARCHAR(50) '$.DailyMovementSupplier_PaymentType',
                 Notes NVARCHAR(MAX) '$.DailyMovementSupplier_Notes'
             );
         END
@@ -242,15 +245,18 @@ BEGIN
             INSERT INTO TblDailyMovementCustomers (
                 DailyMovementCustomer_MovementID, DailyMovementCustomer_CustomerID,
                 DailyMovementCustomer_CustomerName, DailyMovementCustomer_Amount,
-                DailyMovementCustomer_Notes, DailyMovementCustomer_Visible
+                DailyMovementCustomer_PaymentType, DailyMovementCustomer_Notes, 
+                DailyMovementCustomer_Visible
             )
             SELECT 
-                @MovementId, CustomerID, ISNULL(CustomerName, ''), Amount, ISNULL(Notes, ''), 'yes'
+                @MovementId, CustomerID, ISNULL(CustomerName, ''), Amount,
+                PaymentType, ISNULL(Notes, ''), 'yes'
             FROM OPENJSON(@CustomersJson)
             WITH (
                 CustomerID INT '$.DailyMovementCustomer_CustomerID',
                 CustomerName NVARCHAR(200) '$.Customer_Name',
                 Amount DECIMAL(18,2) '$.DailyMovementCustomer_Amount',
+                PaymentType NVARCHAR(50) '$.DailyMovementCustomer_PaymentType',
                 Notes NVARCHAR(MAX) '$.DailyMovementCustomer_Notes'
             );
         END
