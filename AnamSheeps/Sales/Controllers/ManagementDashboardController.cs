@@ -149,11 +149,6 @@ namespace Sales.Controllers
         }
 
 
-        public IActionResult ViewAllMovments()
-        {
-            return View();
-        }
-
         [HttpGet]
         public IActionResult ViewAllDailyMovements(DateTime? date = null)
         {
@@ -229,64 +224,107 @@ namespace Sales.Controllers
             return View(model);
         }
 
-        
-        public async Task<IActionResult> WarehouseMovementsTracking(DateTime? date)
+
+        ////////////////////////////////////////////////////////////////////////////////////
+
+        [HttpGet]
+        public IActionResult WarehouseMovementsTracking(DateTime? date)
         {
             var selectedDate = date ?? DateTime.Today;
-
-            var warehouseKeepers = await _userManager.Users
-                .Where(u => u.Visible == "Yes")
-                .OrderBy(u => u.UserName)
-                .ToListAsync();
-
-            var movements = _unitOfWork.WarehouseMovement.GetAll(m =>
-                m.WarehouseMovement_Date.Date == selectedDate.Date &&
-                m.WarehouseMovement_Visible == "Yes"
-            ).ToList();
-
-            var mortalities = _unitOfWork.WarehouseMortality.GetAll(m => m.WarehouseMortality_Visible == "Yes").ToList();
-            var livestocks = _unitOfWork.WarehouseLivestock.GetAll(l => l.WarehouseLivestock_Visible == "Yes").ToList();
-            var outgoings = _unitOfWork.WarehouseOutgoing.GetAll(o => o.WarehouseOutgoing_Visible == "Yes").ToList();
-
-            var trackingList = new List<UserMovementTracking>();
-
-            foreach (var keeper in warehouseKeepers)
-            {
-                var movement = movements.FirstOrDefault(m => m.WarehouseMovement_UserID == keeper.Id);
-
-                var tracking = new UserMovementTracking
-                {
-                    UserId = keeper.Id,
-                    UserName = keeper.UserName,
-                    UserType = keeper.UserType,
-                    MovementDate = selectedDate,
-                    HasMovement = movement != null,
-                    MovementId = movement?.WarehouseMovement_ID ?? 0,
-                    LastUpdateDate = movement?.WarehouseMovement_EditDate ?? movement?.WarehouseMovement_AddDate
-                };
-
-                if (movement != null)
-                {
-                    tracking.TotalMortality = mortalities
-                        .Where(m => m.WarehouseMortality_MovementID == movement.WarehouseMovement_ID)
-                        .Sum(m => m.WarehouseMortality_Quantity);
-
-                    tracking.TotalLivestock = livestocks
-                        .Where(l => l.WarehouseLivestock_MovementID == movement.WarehouseMovement_ID)
-                        .Sum(l => l.WarehouseLivestock_Quantity);
-
-                    tracking.TotalOutgoing = outgoings
-                        .Where(o => o.WarehouseOutgoing_MovementID == movement.WarehouseMovement_ID)
-                        .Sum(o => o.WarehouseOutgoing_Quantity);
-                }
-
-                trackingList.Add(tracking);
-            }
-
-            ViewBag.SelectedDate = selectedDate;
-            return View(trackingList);
+            ViewBag.SelectedDate = selectedDate.ToString("yyyy-MM-dd");
+            return View();
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetWarehouseMovementsTracking(DateTime? date, int start = 0, int length = 10, string searchValue = "")
+        {
+            try
+            {
+                var selectedDate = date ?? DateTime.Today;
+
+                var warehouseKeepers = await _userManager.Users
+                    .Where(u => u.Visible == "Yes" &&
+                           (string.IsNullOrEmpty(searchValue) ||
+                            u.UserName.Contains(searchValue, StringComparison.OrdinalIgnoreCase) ||
+                            u.UserType.Contains(searchValue, StringComparison.OrdinalIgnoreCase)))
+                    .OrderBy(u => u.UserName)
+                    .ToListAsync();
+
+                var totalRecords = warehouseKeepers.Count;
+
+                warehouseKeepers = warehouseKeepers
+                    .Skip(start)
+                    .Take(length)
+                    .ToList();
+
+                var movements = _unitOfWork.WarehouseMovement.GetAll(m =>
+                    m.WarehouseMovement_Date.Date == selectedDate.Date &&
+                    m.WarehouseMovement_Visible == "Yes"
+                ).ToList();
+
+                var mortalities = _unitOfWork.WarehouseMortality.GetAll(m => m.WarehouseMortality_Visible == "Yes").ToList();
+                var livestocks = _unitOfWork.WarehouseLivestock.GetAll(l => l.WarehouseLivestock_Visible == "Yes").ToList();
+                var outgoings = _unitOfWork.WarehouseOutgoing.GetAll(o => o.WarehouseOutgoing_Visible == "Yes").ToList();
+
+                var result = new List<object>();
+
+                foreach (var keeper in warehouseKeepers)
+                {
+                    var movement = movements.FirstOrDefault(m => m.WarehouseMovement_UserID == keeper.Id);
+
+                    var tracking = new
+                    {
+                        userId = keeper.Id,
+                        userName = keeper.UserName,
+                        userType = keeper.UserType,
+                        hasMovement = movement != null,
+                        movementId = movement?.WarehouseMovement_ID ?? 0,
+                        lastUpdateDate = movement?.WarehouseMovement_EditDate ?? movement?.WarehouseMovement_AddDate,
+                        totalMortality = movement != null ? mortalities
+                            .Where(m => m.WarehouseMortality_MovementID == movement.WarehouseMovement_ID)
+                            .Sum(m => m.WarehouseMortality_Quantity) : 0,
+                        totalLivestock = movement != null ? livestocks
+                            .Where(l => l.WarehouseLivestock_MovementID == movement.WarehouseMovement_ID)
+                            .Sum(l => l.WarehouseLivestock_Quantity) : 0,
+                        totalOutgoing = movement != null ? outgoings
+                            .Where(o => o.WarehouseOutgoing_MovementID == movement.WarehouseMovement_ID)
+                            .Sum(o => o.WarehouseOutgoing_Quantity) : 0,
+                        statusBadge = movement != null ? "success" : "danger",
+                        statusText = movement != null ? "تم الإدخال" : "لم يتم الإدخال",
+                        statusIcon = movement != null ? "ki-check-circle" : "ki-close-circle"
+                    };
+
+                    result.Add(tracking);
+                }
+
+                return Json(new
+                {
+                    draw = HttpContext.Request.Query["draw"],
+                    recordsTotal = totalRecords,
+                    recordsFiltered = totalRecords,
+                    data = result,
+                    summary = new
+                    {
+                        totalCount = totalRecords,
+                        enteredCount = result.Count(r => (bool)r.GetType().GetProperty("hasMovement").GetValue(r)),
+                        notEnteredCount = result.Count(r => !(bool)r.GetType().GetProperty("hasMovement").GetValue(r)),
+                        entryPercentage = totalRecords > 0 ? (result.Count(r => (bool)r.GetType().GetProperty("hasMovement").GetValue(r)) * 100 / totalRecords) : 0
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    draw = HttpContext.Request.Query["draw"],
+                    recordsTotal = 0,
+                    recordsFiltered = 0,
+                    data = new List<object>(),
+                    error = ex.Message
+                });
+            }
+        }
+        
         public async Task<IActionResult> ViewWarehouseMovement(int movementId)
         {
             try

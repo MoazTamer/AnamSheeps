@@ -1,11 +1,7 @@
 ﻿@model List<SalesModel.ViewModels.UserMovementTracking>
 @{
-    var totalAvailableBalance = Model.Sum(m => m.LastBalance);
-
-
     ViewData["Title"] = "متابعة الحركات اليومية للمندوبين";
     ViewData["Page"] = "متابعة الحركات اليومية للمندوبين";
-
     var selectedDate = (DateTime)ViewBag.SelectedDate;
 }
 
@@ -32,75 +28,27 @@
                     </a>
 
                     <!--begin::Date Filter-->
-                    <form method="get" class="d-flex align-items-center gap-3">
+                    <form id="dateFilterForm" method="get" class="d-flex align-items-center gap-3">
                         <label class="form-label fw-bold mb-0">اختر التاريخ:</label>
-                        <input type="date" name="date" class="form-control form-control-solid"
-                               value="@selectedDate.ToString("yyyy-MM-dd")"
-                               onchange="this.form.submit()" />
+                        <input type="date" id="dateFilter" name="date" class="form-control form-control-solid"
+                               value="@selectedDate.ToString("yyyy-MM-dd")" />
+                        <button type="button" id="searchBtn" class="btn btn-primary">
+                            بحث
+                        </button>
                     </form>
                     <!--end::Date Filter-->
-                <!--end::Actions-->
                 </div>
             </div>
             <!--end::Page header-->
             <!--begin::Summary Cards-->
-            <div class="row g-5 mb-5">
-                <div class="col-md-3">
-                    <div class="card card-flush h-100">
-                        <div class="card-body text-center">
-                            <i class="ki-duotone ki-people fs-3x text-primary mb-3">
-                                <span class="path1"></span>
-                                <span class="path2"></span>
-                            </i>
-                            <div class="fs-2hx fw-bold text-gray-800">@Model.Count</div>
-                            <div class="fs-6 text-gray-400 fw-semibold">إجمالي المندوبين</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card card-flush h-100 bg-success bg-opacity-10">
-                        <div class="card-body text-center">
-                            <i class="ki-duotone ki-check-circle fs-3x text-success mb-3">
-                                <span class="path1"></span>
-                                <span class="path2"></span>
-                            </i>
-                            <div class="fs-2hx fw-bold text-success">@Model.Count(m => m.HasMovement)</div>
-                            <div class="fs-6 text-gray-600 fw-semibold">تم الإدخال</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card card-flush h-100 bg-danger bg-opacity-10">
-                        <div class="card-body text-center">
-                            <i class="ki-duotone ki-close-circle fs-3x text-danger mb-3">
-                                <span class="path1"></span>
-                                <span class="path2"></span>
-                            </i>
-                            <div class="fs-2hx fw-bold text-danger">@Model.Count(m => !m.HasMovement)</div>
-                            <div class="fs-6 text-gray-600 fw-semibold">لم يتم الإدخال</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card card-flush h-100 bg-warning bg-opacity-10">
-                        <div class="card-body text-center">
-                            <i class="ki-duotone ki-chart-simple fs-3x text-warning mb-3">
-                                <span class="path1"></span>
-                                <span class="path2"></span>
-                            </i>
-                            <div class="fs-2hx fw-bold text-warning">@((Model.Count(m => m.HasMovement) * 100 / Math.Max(Model.Count, 1)).ToString("0"))%</div>
-                            <div class="fs-6 text-gray-600 fw-semibold">نسبة الإدخال</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <div class="row g-5 mb-5" id="summaryCards"></div>
             <!--end::Summary Cards-->
             <!--begin::Movements List-->
             <div class="card">
                 <div class="card-header border-0 pt-6">
                     <h3 class="card-title align-items-start flex-column">
                         <span class="card-label fw-bold fs-3 mb-1">قائمة المندوبين</span>
-                        <span class="text-muted mt-1 fw-semibold fs-7">التاريخ: @selectedDate.ToString("yyyy-MM-dd")</span>
+                        <span class="text-muted mt-1 fw-semibold fs-7" id="tableDateText">التاريخ: @selectedDate.ToString("yyyy-MM-dd")</span>
                     </h3>
                 </div>
                 <div class="card-body py-4">
@@ -120,12 +68,11 @@
                             <tfoot>
                                 <tr class="fw-bold bg-light">
                                     <td colspan="3" class="text-center fs-5">الإجمــــــــالي</td>
-                                    <td class="text-center fs-5 text-success">@totalAvailableBalance</td>
+                                    <td id="totalBalanceCell" class="text-center fs-5 text-success">0</td>
                                     <td></td>
                                     <td></td>
                                 </tr>
                             </tfoot>
-
                         </table>
                     </div>
                 </div>
@@ -136,12 +83,10 @@
 </div>
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+<link href="~/css/custom.css" rel="stylesheet" />
 
-@section Scripts{
-
+@section Scripts {
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-
-
-   <script src="~/js/DailyMovementsTracking.js"></script>
+    <script src="~/js/DailyMovementsTracking.js"></script>
 }
