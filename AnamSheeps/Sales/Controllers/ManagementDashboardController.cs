@@ -72,6 +72,49 @@ namespace Sales.Controllers
             ViewBag.SelectedDate = selectedDate;
             return View(trackingList);
         }
+        [HttpGet]
+        public IActionResult GetDailyMovementsTracking(DateTime? date)
+        {
+            var selectedDate = date ?? DateTime.Today;
+
+            var param = new DynamicParameters();
+            param.Add("@TargetDate", selectedDate);
+
+            var spResult = _unitOfWork.SP_Call.DailyMovementList("SP_GetDailyMovementsTracking", param);
+
+            var users = spResult.Users.ToList();
+            var todayMov = spResult.TodayMovements.ToList();
+            var lastMov = spResult.LastMovements.ToList();
+
+            var trackingList = new List<UserMovementTracking>();
+
+            foreach (var user in users)
+            {
+                var movementToday = todayMov.FirstOrDefault(m => m.DailyMovement_UserID == user.Id);
+
+                var lastMovement = movementToday
+                    ?? lastMov.FirstOrDefault(m => m.DailyMovement_UserID == user.Id);
+
+                int movementId = movementToday?.DailyMovement_ID ?? lastMovement?.DailyMovement_ID ?? 0;
+
+                decimal finalBalance = lastMovement?.DailyMovement_FinalBalance ?? 0;
+
+                trackingList.Add(new UserMovementTracking
+                {
+                    UserId = user.Id,
+                    UserName = user.UserName,
+                    UserType = user.UserType,
+                    MovementDate = selectedDate,
+                    HasMovement = movementToday != null,
+                    MovementId = movementId,
+                    LastBalance = finalBalance,
+                    LastUpdateDate = lastMovement?.DailyMovement_EditDate
+                                     ?? lastMovement?.DailyMovement_AddDate
+                });
+            }
+
+            return Json(new { success = true, data = trackingList });
+        }
 
 
 
