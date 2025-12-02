@@ -32,18 +32,7 @@
                     </div>
 
                     <div class="d-flex gap-2">
-                        @* @if (userType == "إدارة" || User.IsInRole("إدارة"))
-                        {
-                            <!-- زر الطباعة -->
-                            <button type="button" class="btn btn-success" onclick="printReport()">
-                                <i class="ki-duotone ki-printer fs-3">
-                                    <span class="path1"></span>
-                                    <span class="path2"></span>
-                                </i>
-                                طباعة التقرير
-                            </button>
-
-                        } *@
+                       
                         <!-- زر التعديل -->
                         <a href="@Url.Action("Index", "DailyMovement", new { targetUserId = Model.DailyMovement_UserID, targetDate = Model.DailyMovement_Date })"
                         
@@ -68,58 +57,7 @@
                 </div>
             </div>
             <!--end::Page header-->
-            @* <!--begin::Summary Cards-->
-            <div class="row g-5 mb-5">
-                <div class="col-md-3">
-                    <div class="card card-flush h-100 bg-primary bg-opacity-10">
-                        <div class="card-body text-center">
-                            <i class="ki-duotone ki-purchase fs-3x text-primary mb-3">
-                                <span class="path1"></span>
-                                <span class="path2"></span>
-                            </i>
-                            <div class="fs-2hx fw-bold text-primary">@Model.Details.Sum(d => d.DailyMovementDetails_Total).ToString("N2")</div>
-                            <div class="fs-6 text-gray-600 fw-semibold">إجمالي المشتريات</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card card-flush h-100 bg-danger bg-opacity-10">
-                        <div class="card-body text-center">
-                            <i class="ki-duotone ki-bill fs-3x text-danger mb-3">
-                                <span class="path1"></span>
-                                <span class="path2"></span>
-                            </i>
-                            <div class="fs-2hx fw-bold text-danger">@Model.Expenses.Sum(e => e.DailyMovementExpense_Total).ToString("N2")</div>
-                            <div class="fs-6 text-gray-600 fw-semibold">إجمالي المصروفات</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card card-flush h-100 bg-success bg-opacity-10">
-                        <div class="card-body text-center">
-                            <i class="ki-duotone ki-wallet fs-3x text-success mb-3">
-                                <span class="path1"></span>
-                                <span class="path2"></span>
-                            </i>
-                            <div class="fs-2hx fw-bold text-success">@Model.Balances.Sum(b => b.DailyMovementBalance_Amount).ToString("N2")</div>
-                            <div class="fs-6 text-gray-600 fw-semibold">الأرصدة</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card card-flush h-100 bg-warning bg-opacity-10">
-                        <div class="card-body text-center">
-                            <i class="ki-duotone ki-arrows-circle fs-3x text-warning mb-3">
-                                <span class="path1"></span>
-                                <span class="path2"></span>
-                            </i>
-                            <div class="fs-2hx fw-bold text-warning">@Model.Withdrawals.Sum(w => w.DailyMovementWithdrawal_Amount).ToString("N2")</div>
-                            <div class="fs-6 text-gray-600 fw-semibold">المسحوبات</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!--end::Summary Cards--> *@
+          
 
             <!--begin::Details-->
             @if (Model.Details.Any())
