@@ -1,0 +1,13 @@
+﻿@media print {
+    .card-header, .btn, .form-control
+
+{
+    display: none !important;
+}
+
+.delegate-card {
+    break-inside: avoid;
+    margin-bottom: 20px;
+}
+
+}

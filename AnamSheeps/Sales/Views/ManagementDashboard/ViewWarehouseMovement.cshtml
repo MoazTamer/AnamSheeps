@@ -1,0 +1,243 @@
+﻿@using SalesModel.Models
+@model SalesModel.ViewModels.ModelWarehouseMovement
+@{
+    ViewData["Title"] = "عرض بيان المستودع اليومي";
+    ViewData["Page"] = "عرض بيان المستودع اليومي";
+    var isReadOnly = ViewBag.IsReadOnly ?? false;
+}
+
+<div class="d-flex flex-column flex-column-fluid">
+    <div id="kt_app_content" class="app-content flex-column-fluid">
+        <div id="kt_app_content_container" class="app-container container-fluid">
+
+            <!--begin::Page header-->
+            <div class="card mb-5">
+                <div class="card-body d-flex align-items-center justify-content-between py-5">
+                    <div>
+                        <h1 class="page-heading d-flex flex-column align-items-start mb-0">
+                            <span class="text-dark fw-bold fs-1">عرض بيان المستودع اليومي</span>
+                            <span class="text-muted mt-1 fw-semibold fs-6">أمين المستودع: @ViewBag.UserName</span>
+                        </h1>
+                        <div class="text-muted mt-2 fs-7">
+                            <i class="ki-duotone ki-calendar fs-6 me-1">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            التاريخ: @Model.WarehouseMovement_Date.ToString("yyyy-MM-dd")
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <a href="@Url.Action("WarehouseMovementsTracking", "ManagementDashboard", new { date = Model.WarehouseMovement_Date })"
+                           class="btn btn-light-primary">
+                            <i class="ki-duotone ki-arrow-right fs-3">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            رجوع
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <!--end::Page header-->
+            <!--begin::Summary Cards-->
+            <div class="row g-5 mb-5">
+                <div class="col-md-4">
+                    <div class="card card-flush h-100 bg-danger bg-opacity-10">
+                        <div class="card-body text-center">
+                            <i class="ki-duotone ki-cross-circle fs-3x text-danger mb-3">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            <div class="fs-2hx fw-bold text-danger">@Model.Mortalities.Sum(m => m.WarehouseMortality_Quantity)</div>
+                            <div class="fs-6 text-gray-600 fw-semibold">إجمالي النفوق والمستهلك</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card card-flush h-100 bg-success bg-opacity-10">
+                        <div class="card-body text-center">
+                            <i class="ki-duotone ki-check-circle fs-3x text-success mb-3">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            <div class="fs-2hx fw-bold text-success">@Model.Livestocks.Sum(l => l.WarehouseLivestock_Quantity)</div>
+                            <div class="fs-6 text-gray-600 fw-semibold">إجمالي الحلال الموجود</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card card-flush h-100 bg-warning bg-opacity-10">
+                        <div class="card-body text-center">
+                            <i class="ki-duotone ki-arrows-circle fs-3x text-warning mb-3">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            <div class="fs-2hx fw-bold text-warning">@Model.Outgoings.Sum(o => o.WarehouseOutgoing_Quantity)</div>
+                            <div class="fs-6 text-gray-600 fw-semibold">إجمالي الخارج من المزرعة</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--end::Summary Cards-->
+            <!--begin::النفوق والمستهلك-->
+            @if (Model.Mortalities.Any())
+            {
+                <div class="card mb-5">
+                    <div class="card-header">
+                        <h3 class="card-title">النفوق والمستهلك</h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-row-bordered table-row-gray-100 align-middle gs-0 gy-3">
+                                <thead>
+                                    <tr class="fw-bold text-dark bg-light">
+                                        <th class="min-w-50px text-center">م</th>
+                                        <th class="min-w-200px">الصنف</th>
+                                        <th class="min-w-100px text-center">العدد</th>
+                                        <th class="min-w-250px">ملاحظات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        int mortalityRowNum = 1;
+                                        foreach (var mortality in Model.Mortalities)
+                                        {
+                                            var product = ViewBag.Products != null
+                                            ? ((List<TblProduct>)ViewBag.Products).FirstOrDefault(p => p.Product_ID == mortality.WarehouseMortality_ProductID)
+                                            : null;
+                                            <tr>
+                                                <td class="text-center text-dark">@mortalityRowNum</td>
+                                                <td class="text-dark fw-bold">@(product?.Product_Name ?? "غير معروف")</td>
+                                                <td class="text-center">
+                                                    <span class="badge badge-light-dark fs-6">@mortality.WarehouseMortality_Quantity</span>
+                                                </td>
+                                                <td class="text-muted">@mortality.WarehouseMortality_Notes</td>
+                                            </tr>
+                                            mortalityRowNum++;
+                                        }
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr class="fw-bold bg-light-danger">
+                                        <td colspan="2" class="text-center">الإجمالي</td>
+                                        <td class="text-center fs-5 text-dark">@Model.Mortalities.Sum(m => m.WarehouseMortality_Quantity)</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+            <!--end::النفوق والمستهلك-->
+            <!--begin::الحلال الموجود-->
+            @if (Model.Livestocks.Any())
+            {
+                <div class="card mb-5">
+                    <div class="card-header">
+                        <h3 class="card-title">الحلال الموجود</h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-row-bordered table-row-gray-100 align-middle gs-0 gy-3">
+                                <thead>
+                                    <tr class="fw-bold text-dark bg-light">
+                                        <th class="min-w-50px text-center">م</th>
+                                        <th class="min-w-200px">الصنف</th>
+                                        <th class="min-w-100px text-center">العدد</th>
+                                        <th class="min-w-250px">ملاحظات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        int livestockRowNum = 1;
+                                        foreach (var livestock in Model.Livestocks)
+                                        {
+                                            var product = ViewBag.Products != null
+                                            ? ((List<TblProduct>)ViewBag.Products).FirstOrDefault(p => p.Product_ID == livestock.WarehouseLivestock_ProductID)
+                                            : null;
+                                            <tr>
+                                                <td class="text-center text-dark">@livestockRowNum</td>
+                                                <td class="text-dark fw-bold">@(product?.Product_Name ?? "غير معروف")</td>
+                                                <td class="text-center">
+                                                    <span class="badge text-dark fs-6">@livestock.WarehouseLivestock_Quantity</span>
+                                                </td>
+                                                <td class="text-muted">@livestock.WarehouseLivestock_Notes</td>
+                                            </tr>
+                                            livestockRowNum++;
+                                        }
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr class="fw-bold bg-light-success">
+                                        <td colspan="2" class="text-center">الإجمالي</td>
+                                        <td class="text-center fs-5 text-dark">@Model.Livestocks.Sum(l => l.WarehouseLivestock_Quantity)</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+            <!--end::الحلال الموجود-->
+            <!--begin::الخارج من المزرعة-->
+            @if (Model.Outgoings.Any())
+            {
+                <div class="card mb-5">
+                    <div class="card-header">
+                        <h3 class="card-title">الخارج من المزرعة</h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-row-bordered table-row-gray-100 align-middle gs-0 gy-3">
+                                <thead>
+                                    <tr class="fw-bold text-dark bg-light">
+                                        <th class="min-w-50px text-center">م</th>
+                                        <th class="min-w-150px">المندوب</th>
+                                        <th class="min-w-200px">الصنف</th>
+                                        <th class="min-w-100px text-center">العدد</th>
+                                        <th class="min-w-250px">ملاحظات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        int outgoingRowNum = 1;
+                                        foreach (var outgoing in Model.Outgoings)
+                                        {
+                                            var product = ViewBag.Products != null
+                                            ? ((List<TblProduct>)ViewBag.Products).FirstOrDefault(p => p.Product_ID == outgoing.WarehouseOutgoing_ProductID)
+                                            : null;
+                                            <tr>
+                                                <td class="text-center text-dark">@outgoingRowNum</td>
+                                                <td>
+                                                    <span class="badge text-dark">@outgoing.WarehouseOutgoing_DelegateName</span>
+                                                </td>
+                                                <td class="text-dark fw-bold">@(product?.Product_Name ?? "غير معروف")</td>
+                                                <td class="text-center">
+                                                    <span class="badge text-dark fs-6">@outgoing.WarehouseOutgoing_Quantity</span>
+                                                </td>
+                                                <td class="text-muted">@outgoing.WarehouseOutgoing_Notes</td>
+                                            </tr>
+                                            outgoingRowNum++;
+                                        }
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr class="fw-bold bg-light-warning">
+                                        <td colspan="3" class="text-center">الإجمالي</td>
+                                        <td class="text-center fs-5 text-dark">@Model.Outgoings.Sum(o => o.WarehouseOutgoing_Quantity)</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+            <!--end::الخارج من المزرعة-->
+
+        </div>
+    </div>
+</div>
