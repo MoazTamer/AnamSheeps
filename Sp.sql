@@ -711,14 +711,14 @@ END
 GO
 
 
-Alter PROCEDURE SP_ViewAllDailyMovements
+ALTER PROCEDURE SP_ViewAllDailyMovements
     @TargetDate DATE
 AS
 BEGIN
-    DECLARE @Movement TABLE (ID INT);
+    DECLARE @Movement TABLE (ID INT, UserID NVARCHAR(450));
 
-    INSERT INTO @Movement
-    SELECT DailyMovement_ID
+    INSERT INTO @Movement (ID, UserID)
+    SELECT DailyMovement_ID, DailyMovement_UserID
     FROM TblDailyMovements
     WHERE DailyMovement_Date = @TargetDate
       AND DailyMovement_Visible = 'yes';
@@ -768,4 +768,23 @@ BEGIN
     FROM TblDailyMovementBalances b
     JOIN @Movement m ON b.DailyMovementBalance_MovementID = m.ID
     WHERE b.DailyMovementBalance_Visible = 'yes';
+
+    SELECT wm.*
+    FROM TblWarehouseMovement wm
+    JOIN @Movement m ON wm.WarehouseMovement_UserID = m.UserID
+    WHERE wm.WarehouseMovement_Date = @TargetDate
+      AND wm.WarehouseMovement_Visible = 'Yes';
+
+    SELECT mo.*, p.*
+    FROM TblWarehouseMortality mo
+    JOIN TblProduct p ON mo.WarehouseMortality_ProductID = p.Product_ID
+    WHERE mo.WarehouseMortality_MovementID IN (
+        SELECT WarehouseMovement_ID 
+        FROM TblWarehouseMovement wm
+        JOIN @Movement m ON wm.WarehouseMovement_UserID = m.UserID
+        WHERE wm.WarehouseMovement_Date = @TargetDate
+          AND wm.WarehouseMovement_Visible = 'Yes'
+    )
+    AND mo.WarehouseMortality_Visible = 'Yes';
 END
+GO
