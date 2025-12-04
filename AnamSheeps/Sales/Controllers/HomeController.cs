@@ -134,7 +134,7 @@ namespace Sales.Controllers
                     {
                         DailyMovementExpense_ID = expense.DailyMovementExpense_ID,
                         DailyMovementExpense_CategoryID = expense.DailyMovementExpense_CategoryID ?? 0,
-                        ExpenseCategory_Name = expense.DailyMovementExpense_CategoryName,
+                        //ExpenseCategory_Name = expense.DailyMovementExpense_CategoryName,
                         DailyMovementExpense_CategoryName = expense.DailyMovementExpense_CategoryName ?? "",
                         DailyMovementExpense_Quantity = expense.DailyMovementExpense_Quantity,
                         DailyMovementExpense_Amount = expense.DailyMovementExpense_Amount,
@@ -158,6 +158,7 @@ namespace Sales.Controllers
                         DailyMovementSupplier_SupplierID = supplier.DailyMovementSupplier_SupplierID ?? 0,
                         Supplier_Name = supplier.DailyMovementSupplier_SupplierName,
                         DailyMovementSupplier_SupplierName = supplier.DailyMovementSupplier_SupplierName ?? "",
+                        DailyMovementSupplier_PaymentType = supplier.DailyMovementSupplier_PaymentType,
                         DailyMovementSupplier_Amount = supplier.DailyMovementSupplier_Amount,
                         DailyMovementSupplier_Notes = supplier.DailyMovementSupplier_Notes
                     });
@@ -176,7 +177,8 @@ namespace Sales.Controllers
                     {
                         DailyMovementCustomer_ID = customer.DailyMovementCustomer_ID,
                         DailyMovementCustomer_CustomerID = customer.DailyMovementCustomer_CustomerID,
-                        Customer_Name = customer.DailyMovementCustomer_CustomerName,
+                        DailyMovementCustomer_CustomerName = customer.DailyMovementCustomer_CustomerName,
+                        DailyMovementCustomer_PaymentType = customer.DailyMovementCustomer_PaymentType,
                         DailyMovementCustomer_Amount = customer.DailyMovementCustomer_Amount,
                         DailyMovementCustomer_Notes = customer.DailyMovementCustomer_Notes
                     });

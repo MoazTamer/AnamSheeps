@@ -59,9 +59,8 @@ namespace SalesModel.ViewModels
     {
         public int DailyMovementExpense_ID { get; set; }
         public int? DailyMovementExpense_CategoryID { get; set; }
-        public string? ExpenseCategory_Name { get; set; }
         public string? DailyMovementExpense_CategoryName { get; set; }
-
+        //public string? ExpenseCategory_Name {  get; set; }
         public int DailyMovementExpense_Quantity { get; set; }
         public decimal DailyMovementExpense_Amount { get; set; }
         public decimal DailyMovementExpense_Total { get; set; }
@@ -73,8 +72,9 @@ namespace SalesModel.ViewModels
     {
         public int DailyMovementSupplier_ID { get; set; }
         public int? DailyMovementSupplier_SupplierID { get; set; }
+        public string? DailyMovementSupplier_SupplierName {get; set;}
         public string? Supplier_Name { get; set; }
-        public string DailyMovementSupplier_SupplierName { get; set; }
+        //public string DailyMovementSupplier_SupplierName { get; set; }
         public decimal DailyMovementSupplier_Amount { get; set; }
         public string? DailyMovementSupplier_PaymentType { get; set; }
         public string? DailyMovementSupplier_Notes { get; set; }
@@ -85,6 +85,7 @@ namespace SalesModel.ViewModels
     {
         public int DailyMovementCustomer_ID { get; set; }
         public int? DailyMovementCustomer_CustomerID { get; set; }
+        public string? DailyMovementCustomer_CustomerName { get; set; }
         public string? Customer_Name { get; set; }
         public decimal DailyMovementCustomer_Amount { get; set; }
         public string? DailyMovementCustomer_PaymentType { get; set; }

@@ -54,7 +54,7 @@ namespace Sales.Controllers
                 };
 
                 ViewBag.Products = data.Products?.ToList() ?? new List<TblProduct>();
-                ViewBag.Delegates = data.Delegates?.ToList() ?? new List<TblCustomer>();
+                ViewBag.Delegates = data.Delegates?.ToList() ?? new List<ApplicationUser>();
 
                 return View(model);
             }

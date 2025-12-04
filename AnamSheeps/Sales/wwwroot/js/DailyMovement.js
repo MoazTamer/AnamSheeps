@@ -1627,7 +1627,7 @@ function saveMovement() {
         }
 
         expenses.push({
-            DailyMovementExpense_CategoryID: 1,
+            DailyMovementExpense_CategoryID: null,
             DailyMovementExpense_CategoryName: categoryName, 
             DailyMovementExpense_Quantity: quantity,
             DailyMovementExpense_Amount: amount,

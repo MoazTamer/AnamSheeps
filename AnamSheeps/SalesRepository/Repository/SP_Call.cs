@@ -200,7 +200,7 @@ namespace SalesRepository.Repository
 
                         Products = multi.Read<TblProduct>().ToList(),
 
-                        Delegates = multi.Read<TblCustomer>().ToList()
+                        Delegates = multi.Read<ApplicationUser>().ToList()
                     };
 
                     return result;

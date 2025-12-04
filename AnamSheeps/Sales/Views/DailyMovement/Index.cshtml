@@ -402,7 +402,7 @@
                                             <tr class="expense-row">
                                                 <td class="text-center expense-row-number">@rowNum</td>
                                                 <td>
-                                                    <input type="text" class="form-control form-control-sm expense-category-input" placeholder="اسم المصروف" value="@expense.ExpenseCategory_Name" />
+                                                    <input type="text" class="form-control form-control-sm expense-category-input" placeholder="اسم المصروف" value="@expense.DailyMovementExpense_CategoryName" />
                                                 </td>
                                                 <td><input type="number" class="form-control form-control-sm text-center expense-quantity-input" value="@expense.DailyMovementExpense_Quantity" min="0" /></td>
                                                 <td><input type="number" step="0.01" class="form-control form-control-sm text-center expense-amount-input" value="@expense.DailyMovementExpense_Amount" min="0" /></td>
@@ -491,7 +491,7 @@
                                             <tr class="supplier-row">
                                                 <td class="text-center supplier-row-number">@rowNum</td>
                                                 <td>
-                                                    <input type="text" class="form-control form-control-sm supplier-name-input" value="@supplier.Supplier_Name" />
+                                                    <input type="text" class="form-control form-control-sm supplier-name-input" value="@supplier.DailyMovementSupplier_SupplierName" />
                                                 </td>
                                                 <td><input type="number" step="0.01" class="form-control form-control-sm text-center supplier-amount-input" value="@supplier.DailyMovementSupplier_Amount" min="0" /></td>
                                                 <td>
@@ -595,7 +595,7 @@
                                             <tr class="customer-row">
                                                 <td class="text-center customer-row-number">@rowNum</td>
                                                 <td>
-                                                    <input type="text" class="form-control form-control-sm customer-name-input" value="@customer.Customer_Name" />
+                                                    <input type="text" class="form-control form-control-sm customer-name-input" value="@customer.DailyMovementCustomer_CustomerName" />
                                                
                                                 </td>
                                                 <td><input type="number" step="1" class="form-control form-control-sm text-center customer-amount-input" value="@customer.DailyMovementCustomer_Amount" min="0" /></td>

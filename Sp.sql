@@ -1,6 +1,6 @@
-﻿use AnamSheeps;
+﻿use SheepsErpDB;
 
-ALTER PROCEDURE SP_GetDailyMovementData
+CREATE OR ALTER PROCEDURE SP_GetDailyMovementData
     @UserId NVARCHAR(450),
     @TargetDate DATE
 AS
@@ -104,7 +104,7 @@ BEGIN
 END
 GO
 
-ALTER PROCEDURE SP_SaveDailyMovementComplete
+CREATE OR ALTER PROCEDURE SP_SaveDailyMovementComplete
     @UserId NVARCHAR(450),
     @TargetDate DATE,
     @DetailsJson NVARCHAR(MAX) = NULL,
@@ -211,7 +211,7 @@ BEGIN
             FROM OPENJSON(@ExpensesJson)
             WITH (
                 CategoryID INT '$.DailyMovementExpense_CategoryID',
-                CategoryName NVARCHAR(200) '$.ExpenseCategory_Name',
+                CategoryName NVARCHAR(200) '$.DailyMovementExpense_CategoryName',
                 Quantity INT '$.DailyMovementExpense_Quantity',
                 Amount DECIMAL(18,2) '$.DailyMovementExpense_Amount',
                 Total DECIMAL(18,2) '$.DailyMovementExpense_Total',
@@ -305,7 +305,7 @@ BEGIN
 END
 GO
 
-ALTER PROCEDURE SP_RecalculateBalances
+CREATE OR ALTER PROCEDURE SP_RecalculateBalances
     @UserId NVARCHAR(450),
     @FromDate DATE
 AS
@@ -417,7 +417,7 @@ END
 GO
 
 --------------
-ALTER PROCEDURE SP_GetWarehouseMovementData
+CREATE OR ALTER PROCEDURE SP_GetWarehouseMovementData
     @UserId NVARCHAR(450),
     @TargetDate DATE
 AS
@@ -480,7 +480,7 @@ BEGIN
 END
 GO
 
-ALTER PROCEDURE SP_SaveWarehouseMovement
+CREATE OR ALTER PROCEDURE SP_SaveWarehouseMovement
     @UserId NVARCHAR(450),
     @TargetDate DATE,
     @MortalitiesJson NVARCHAR(MAX) = NULL,
@@ -612,7 +612,7 @@ GO
 
 --------------
 
-ALTER PROCEDURE SP_GetDailyMovementsTracking
+CREATE OR ALTER PROCEDURE SP_GetDailyMovementsTracking
     @TargetDate DATE
 AS
 BEGIN
@@ -650,7 +650,7 @@ END
 GO
 
 
-ALTER PROCEDURE SP_ViewDailyMovement
+CREATE OR ALTER PROCEDURE SP_ViewDailyMovement
     @MovementId INT
 AS
 BEGIN
@@ -711,7 +711,7 @@ END
 GO
 
 
-ALTER PROCEDURE SP_ViewAllDailyMovements
+CREATE OR ALTER PROCEDURE SP_ViewAllDailyMovements
     @TargetDate DATE
 AS
 BEGIN

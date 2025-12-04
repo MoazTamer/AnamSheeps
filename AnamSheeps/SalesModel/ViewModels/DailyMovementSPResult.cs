@@ -41,7 +41,7 @@ namespace SalesModel.ViewModels
         public IEnumerable<TblWarehouseOutgoing> Outgoings { get; set; }
 
         public IEnumerable<TblProduct> Products { get; set; }
-        public IEnumerable<TblCustomer> Delegates { get; set; }
+        public IEnumerable<ApplicationUser> Delegates { get; set; }
     }
 
 }
